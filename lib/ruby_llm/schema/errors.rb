@@ -28,4 +28,4 @@ module RubyLLM
     # Raised when maximum limits are exceeded
     class LimitExceededError < Error; end
   end
-end 
+end

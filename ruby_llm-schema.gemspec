@@ -38,7 +38,9 @@ Gem::Specification.new do |spec|
 
   # Development dependencies
   spec.add_development_dependency "rspec", "~> 3.0"
+  spec.add_development_dependency "standard"
 
   # For more information and examples about making a new gem, check out our
   # guide at: https://bundler.io/guides/creating_gem.html
+  spec.metadata["rubygems_mfa_required"] = "true"
 end

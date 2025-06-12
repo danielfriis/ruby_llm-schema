@@ -1,10 +1,16 @@
-# RubyLlm::Schema
+# RubyLLM::Schema
 
 A Ruby DSL for creating JSON schemas with a clean, Rails-inspired API. Perfect for defining structured data schemas for LLM function calling, API validation, or any application requiring JSON schema definitions.
 
 ## Features
 
-<!-- TODO -->
+- **Three Beautiful APIs**: Choose the syntax that fits your use case
+- **Type Safety**: Built-in validation for schema definitions
+- **Nested Objects**: Full support for complex nested structures
+- **Array Support**: Arrays of primitives or complex objects
+- **Union Types**: `anyOf` support for flexible schemas
+- **Schema Reuse**: Define reusable schema components
+- **Rails-style DSL**: Clean, readable syntax following Ruby conventions
 
 ## Installation
 
@@ -28,61 +34,256 @@ gem install ruby_llm-schema
 
 ## Usage
 
-### Basic Schema Definition
+RubyLLM::Schema provides three approaches for creating schemas, optimized for different use cases:
 
-<!-- TODO -->
+### 1. Class Inheritance (Best for reusable schemas)
 
-### Field Types
+Perfect when you need a reusable schema class that can be instantiated multiple times or extended.
 
-<!-- TODO -->
+```ruby
+class PersonSchema < RubyLLM::Schema
+  string :name, description: "Person's full name"
+  number :age, description: "Age in years"
+  boolean :active, required: false
+  
+  object :address do
+    string :street
+    string :city
+    string :country, required: false
+  end
+  
+  array :tags, of: :string, description: "User tags"
+  
+  array :contacts do
+    object do
+      string :email
+      string :phone, required: false
+    end
+  end
+  
+  any_of :status do
+    string enum: ["active", "pending", "inactive"]
+    null
+  end
+end
 
-### Optional Fields
+# Usage
+schema = PersonSchema.new("PersonData", "A person object")
+puts schema.to_json
+```
 
-<!-- TODO -->
+### 2. Factory Method (Best for one-off schemas)
 
-### String Enums
+Ideal for creating schema classes without explicit inheritance, reducing boilerplate for simple cases.
 
-<!-- TODO -->
+```ruby
+PersonSchema = RubyLLM::Schema.create do
+  string :name, description: "Person's full name"
+  number :age
+  boolean :active, required: false
+  
+  object :address do
+    string :street
+    string :city
+  end
+end
 
-### Arrays
+# Usage
+schema = PersonSchema.new("PersonData")
+puts schema.to_json
+```
 
-<!-- TODO -->
+### 3. Global Helper (Best for inline schemas)
 
-### Nested Objects
+Perfect for creating schema instances directly without defining classes. Requires including the helper module.
 
-<!-- TODO -->
+```ruby
+require 'ruby_llm/schema'
+include RubyLLM::Helpers
 
-### Union Types (anyOf)
+# Named schema with description
+person_schema = schema "PersonData", "A person object" do
+  string :name, description: "Person's full name"
+  number :age
+  boolean :active, required: false
+  
+  object :address do
+    string :street
+    string :city
+  end
+end
 
-<!-- TODO -->
+# Minimal syntax
+simple_schema = schema do
+  string :title
+  number :count
+end
 
+puts person_schema.to_json
+```
 
-### Error Handling
+## Field Types
 
-<!-- TODO -->
+### Basic Types
 
-### Complete Example
+```ruby
+string :name                          # Required string
+string :title, required: false       # Optional string  
+string :status, enum: ["on", "off"]  # String with enum values
+number :count                         # Required number
+boolean :active                       # Required boolean
+null :placeholder                     # Null type
+```
 
-<!-- TODO -->
+### Complex Types
 
-## API Reference
+#### Objects
+```ruby
+object :user do
+  string :name
+  number :age
+end
 
-### Field Methods
+# With description
+object :settings, description: "User preferences" do
+  boolean :notifications
+  string :theme, enum: ["light", "dark"]
+end
+```
 
-- `string(name, enum: nil, description: nil, required: true)`
-- `number(name, description: nil, required: true)`  
-- `boolean(name, description: nil, required: true)`
-- `null(name, description: nil, required: true)`
-- `object(name, description: nil, required: true, &block)`
-- `array(name, of: nil, description: nil, required: true, &block)`
-- `schema(name, schema_class, description: nil, required: true)`
-- `any_of(name, schemas, description: nil, required: true)`
+#### Arrays
+```ruby
+# Array of primitives
+array :tags, of: :string
+array :scores, of: :number
 
-### Schema Methods
+# Array of objects
+array :items do
+  object do
+    string :name
+    number :price
+  end
+end
+```
 
-- `to_json_schema` - Returns Hash with complete JSON schema
-- `to_json` - Returns pretty-printed JSON string
-- `validate_schema!` - Validates schema definition
+#### Union Types (anyOf)
+```ruby
+any_of :value do
+  string
+  number  
+  null
+end
+
+any_of :identifier do
+  string description: "Username"
+  number description: "User ID"
+end
+```
+
+### Schema Definitions and References
+
+Create reusable schema components:
+
+```ruby
+class MySchema < RubyLLM::Schema
+  # Define a reusable schema component
+  define :location do
+    string :latitude
+    string :longitude
+  end
+  
+  # Reference it in arrays
+  array :coordinates, of: :location
+  
+  # Or use directly
+  object :home_location do
+    reference :location
+  end
+end
+```
+
+## Complete Examples
+
+### API Response Schema
+```ruby
+ApiResponseSchema = RubyLLM::Schema.create do
+  boolean :success
+  string :message, required: false
+  
+  object :data, required: false do
+    array :users do
+      object do
+        string :id
+        string :name
+        string :email
+        boolean :verified, required: false
+      end
+    end
+    
+    object :pagination do
+      number :page
+      number :total_pages
+      number :total_count
+    end
+  end
+  
+  any_of :error, required: false do
+    string description: "Error message"
+    object do
+      string :code
+      string :message
+      array :details, of: :string, required: false
+    end
+  end
+end
+```
+
+### LLM Function Schema
+```ruby
+include RubyLLM::Helpers
+
+weather_function = schema "get_weather", "Get current weather for a location" do
+  string :location, description: "City name or coordinates"
+  string :units, enum: ["celsius", "fahrenheit"], required: false
+  boolean :include_forecast, required: false
+end
+```
+
+## JSON Output
+
+All schemas generate complete JSON Schema objects:
+
+```ruby
+schema = PersonSchema.new("PersonData", "A person object")
+schema.to_json_schema
+# => {
+#   name: "PersonData",
+#   description: "A person object", 
+#   schema: {
+#     type: "object",
+#     properties: { ... },
+#     required: [...],
+#     additionalProperties: false,
+#     strict: true,
+#     "$defs": { ... }
+#   }
+# }
+
+# Pretty JSON string
+puts schema.to_json
+```
+
+## Best Practices
+
+1. **Use descriptive names and descriptions** for better LLM understanding
+2. **Mark fields as optional when appropriate** using `required: false`
+3. **Use enums for constrained string values** to improve validation
+4. **Group related fields in objects** for better organization
+5. **Define reusable components** with `define` for common patterns
+6. **Choose the right approach**:
+   - **Class inheritance**: Reusable schemas, complex inheritance
+   - **Factory method**: Simple one-off schema classes  
+   - **Global helper**: Quick inline schemas, scripting
 
 ## Development
 

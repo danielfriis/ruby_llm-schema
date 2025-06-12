@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-require 'bundler/setup'
-require 'ruby_llm/schema'
+require "bundler/setup"
+require "ruby_llm/schema"
 
 RSpec.configure do |config|
   # Enable flags like --only-failures and --next-failure
