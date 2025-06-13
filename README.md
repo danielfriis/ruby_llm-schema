@@ -1,6 +1,41 @@
 # RubyLLM::Schema
 
-A Ruby DSL for creating JSON schemas with a clean, Rails-inspired API. Perfect for defining structured data schemas for LLM function calling, API validation, or any application requiring JSON schema definitions.
+A Ruby DSL for creating JSON schemas with a clean, Rails-inspired API. Perfect for defining structured data schemas for LLM function calling or structured outputs.
+
+### Simple Example
+
+```ruby
+class PersonSchema < RubyLLM::Schema
+  string :name, description: "Person's full name"
+  number :age, description: "Age in years"
+  boolean :active, required: false
+  
+  object :address do
+    string :street
+    string :city
+    string :country, required: false
+  end
+  
+  array :tags, of: :string, description: "User tags"
+  
+  array :contacts do
+    object do
+      string :email
+      string :phone, required: false
+    end
+  end
+  
+  any_of :status do
+    string enum: ["active", "pending", "inactive"]
+    null
+  end
+end
+
+# Usage
+schema = PersonSchema.new
+puts schema.to_json
+```
+
 
 ## Features
 
@@ -293,7 +328,7 @@ To install this gem onto your local machine, run `bundle exec rake install`. To 
 
 ## Contributing
 
-Bug reports and pull requests are welcome on GitHub at https://github.com/[USERNAME]/ruby_llm-schema.
+Bug reports and pull requests are welcome on GitHub at https://github.com/danielfriis/ruby_llm-schema.
 
 ## License
 
