@@ -148,6 +148,15 @@ puts person_schema.to_json
 
 ## Field Types
 
+RubyLLM::Schema supports the following types:
+
+- string
+- number
+- boolean
+- array
+- any_of
+- object
+
 ### Basic Types
 
 ```ruby
