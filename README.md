@@ -36,17 +36,6 @@ schema = PersonSchema.new
 puts schema.to_json
 ```
 
-
-## Features
-
-- **Three Beautiful APIs**: Choose the syntax that fits your use case
-- **Type Safety**: Built-in validation for schema definitions
-- **Nested Objects**: Full support for complex nested structures
-- **Array Support**: Arrays of primitives or complex objects
-- **Union Types**: `anyOf` support for flexible schemas
-- **Schema Reuse**: Define reusable schema components
-- **Rails-style DSL**: Clean, readable syntax following Ruby conventions
-
 ## Installation
 
 Add this line to your application's Gemfile:
@@ -71,7 +60,7 @@ gem install ruby_llm-schema
 
 RubyLLM::Schema provides three approaches for creating schemas, optimized for different use cases:
 
-### 1. Class Inheritance (Best for reusable schemas)
+### 1. Class Inheritance
 
 Perfect when you need a reusable schema class that can be instantiated multiple times or extended.
 
@@ -103,11 +92,11 @@ class PersonSchema < RubyLLM::Schema
 end
 
 # Usage
-schema = PersonSchema.new("PersonData", "A person object")
+schema = PersonSchema.new
 puts schema.to_json
 ```
 
-### 2. Factory Method (Best for one-off schemas)
+### 2. Factory Method
 
 Ideal for creating schema classes without explicit inheritance, reducing boilerplate for simple cases.
 
@@ -124,11 +113,11 @@ PersonSchema = RubyLLM::Schema.create do
 end
 
 # Usage
-schema = PersonSchema.new("PersonData")
+schema = PersonSchema.new
 puts schema.to_json
 ```
 
-### 3. Global Helper (Best for inline schemas)
+### 3. Global Helper
 
 Perfect for creating schema instances directly without defining classes. Requires including the helper module.
 
@@ -137,7 +126,7 @@ require 'ruby_llm/schema'
 include RubyLLM::Helpers
 
 # Named schema with description
-person_schema = schema "PersonData", "A person object" do
+person_schema = schema "PersonData", description: "A person object" do
   string :name, description: "Person's full name"
   number :age
   boolean :active, required: false
@@ -163,8 +152,8 @@ puts person_schema.to_json
 
 ```ruby
 string :name                          # Required string
-string :title, required: false       # Optional string  
-string :status, enum: ["on", "off"]  # String with enum values
+string :title, required: false        # Optional string  
+string :status, enum: ["on", "off"]   # String with enum values
 number :count                         # Required number
 boolean :active                       # Required boolean
 null :placeholder                     # Null type
