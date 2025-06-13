@@ -17,6 +17,11 @@ module RubyLLM
         schema_class
       end
 
+      def description(description = nil)
+        @description = description if description
+        @description
+      end
+
       def string(name = nil, enum: nil, description: nil, required: true)
         add_property(name, build_property_schema(:string, enum: enum, description: description), required: required)
       end
@@ -135,8 +140,8 @@ module RubyLLM
       end
     end
 
-    def initialize(name = nil, description = nil)
-      @name = name || self.class.name
+    def initialize(name = nil, description: nil)
+      @name = name || self.class.name || "Schema"
       @description = description
     end
 

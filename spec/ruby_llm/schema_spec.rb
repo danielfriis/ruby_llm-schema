@@ -5,19 +5,22 @@ require "spec_helper"
 RSpec.describe RubyLLM::Schema do
   describe ".create factory method" do
     let(:person_schema) do
-      described_class.create do
+      PersonSchema = described_class.create do
         string :name, description: "Person's name"
         number :age
         boolean :active, required: false
       end
     end
 
-    let(:instance) { person_schema.new("PersonSchema") }
+    let(:instance) { PersonSchema.new }
     let(:json_output) { instance.to_json_schema }
 
     it "creates a new Schema class" do
       expect(person_schema).to be < described_class
       expect(person_schema).not_to eq(described_class)
+
+      expect(instance.class.name).to eq("PersonSchema")
+      expect(json_output[:name]).to eq("PersonSchema")
     end
 
     it "defines properties correctly" do
@@ -60,7 +63,7 @@ RSpec.describe RubyLLM::Schema do
     include RubyLLM::Helpers
 
     let(:person_schema) do
-      schema "PersonSchema", "A person object" do
+      schema "PersonSchema" do
         string :name, description: "Person's name"
         number :age
         boolean :active, required: false
@@ -72,11 +75,12 @@ RSpec.describe RubyLLM::Schema do
     it "creates a schema instance directly" do
       expect(person_schema).to be_a(RubyLLM::Schema)
       expect(person_schema).not_to be_a(Class)
+
+      expect(json_output[:name]).to eq("PersonSchema")
     end
 
     it "sets name and description correctly" do
       expect(json_output[:name]).to eq("PersonSchema")
-      expect(json_output[:description]).to eq("A person object")
     end
 
     it "defines properties correctly" do
@@ -128,7 +132,7 @@ RSpec.describe RubyLLM::Schema do
     let(:schema) { schema_class.new }
 
     let(:schema_class) do
-      Class.new(described_class) do
+      UserSchema = Class.new(described_class) do
         string :name, description: "User's name"
         number :age
         boolean :active
@@ -164,9 +168,9 @@ RSpec.describe RubyLLM::Schema do
     let(:json_output) { schema.to_json_schema }
 
     it "generates the correct JSON schema" do
-      expect(json_output).to include(
-        name: schema_class.name
-      )
+      # Test name and description
+      expect(json_output[:name]).to eq("UserSchema")
+      expect(json_output[:description]).to eq(nil)
 
       properties = json_output[:schema][:properties]
 

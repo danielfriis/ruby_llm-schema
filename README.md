@@ -242,7 +242,7 @@ end
 ```ruby
 include RubyLLM::Helpers
 
-weather_function = schema "get_weather", "Get current weather for a location" do
+weather_function = schema "get_weather", description: "Get current weather for a location" do
   string :location, description: "City name or coordinates"
   string :units, enum: ["celsius", "fahrenheit"], required: false
   boolean :include_forecast, required: false
@@ -254,7 +254,7 @@ end
 All schemas generate complete JSON Schema objects:
 
 ```ruby
-schema = PersonSchema.new("PersonData", "A person object")
+schema = PersonSchema.new
 schema.to_json_schema
 # => {
 #   name: "PersonData",
