@@ -4,7 +4,9 @@ require_relative "schema/version"
 require_relative "schema/property_schema_collector"
 require_relative "schema/errors"
 require_relative "schema/helpers"
+require_relative "schema/validator"
 require "json"
+require "set"
 
 module RubyLLM
   class Schema
@@ -130,6 +132,16 @@ module RubyLLM
         end
       end
 
+      def validate!
+        validator = Validator.new(self)
+        validator.validate!
+      end
+
+      def valid?
+        validator = Validator.new(self)
+        validator.valid?
+      end
+
       private
 
       def add_property(name, definition, required:)
@@ -162,6 +174,8 @@ module RubyLLM
     end
 
     def to_json_schema
+      validate!  # Validate schema before generating JSON
+      
       {
         name: @name,
         description: @description,
@@ -177,7 +191,16 @@ module RubyLLM
     end
 
     def to_json(*_args)
+      validate!  # Validate schema before generating JSON string
       JSON.pretty_generate(to_json_schema)
+    end
+
+    def validate!
+      self.class.validate!
+    end
+
+    def valid?
+      self.class.valid?
     end
 
     def method_missing(method_name, ...)

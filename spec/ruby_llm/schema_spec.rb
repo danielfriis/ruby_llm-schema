@@ -313,6 +313,65 @@ RSpec.describe RubyLLM::Schema do
   end
 
   # ===========================================
+  # VALIDATION TESTS
+  # ===========================================
+  describe "validation" do
+    let(:schema_class) { Class.new(described_class) }
+
+    describe "circular reference detection" do
+      it "detects direct circular references" do
+        schema_class.define :user do
+          string :name
+        end
+
+        # Create a direct circular reference
+        schema_class.definitions[:user][:properties][:self_ref] = schema_class.reference(:user)
+
+        expect(schema_class.valid?).to be false
+        expect { schema_class.validate! }.to raise_error(
+          RubyLLM::Schema::ValidationError, 
+          /Circular reference detected involving 'user'/
+        )
+      end
+
+      it "detects indirect circular references" do
+        schema_class.define :user do
+          string :name
+        end
+
+        schema_class.define :profile do
+          string :bio
+        end
+
+        # Create circular chain: user -> profile -> user
+        schema_class.definitions[:user][:properties][:profile] = schema_class.reference(:profile)
+        schema_class.definitions[:profile][:properties][:owner] = schema_class.reference(:user)
+
+        expect(schema_class.valid?).to be false
+        expect { schema_class.validate! }.to raise_error(
+          RubyLLM::Schema::ValidationError,
+          /Circular reference detected involving/
+        )
+      end
+    end
+
+    describe "validation guards for JSON generation" do
+      it "prevents JSON generation for schemas with circular references" do
+        schema_class.define :user do
+          string :name
+        end
+
+        # Add circular reference
+        schema_class.definitions[:user][:properties][:self_ref] = schema_class.reference(:user)
+
+        instance = schema_class.new
+        expect { instance.to_json_schema }.to raise_error(RubyLLM::Schema::ValidationError)
+        expect { instance.to_json }.to raise_error(RubyLLM::Schema::ValidationError)
+      end
+    end
+  end
+
+  # ===========================================
   # COMPREHENSIVE SCENARIOS
   # ===========================================
   describe "comprehensive scenarios" do
