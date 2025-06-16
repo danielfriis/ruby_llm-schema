@@ -8,7 +8,7 @@ require "json"
 
 module RubyLLM
   class Schema
-    PRIMITIVE_TYPES = %i[string number boolean null].freeze
+    PRIMITIVE_TYPES = %i[string number integer boolean null].freeze
 
     class << self
       def create(&block)
@@ -22,12 +22,26 @@ module RubyLLM
         @description
       end
 
+      def additional_properties(value = nil)
+        return @additional_properties ||= false if value.nil?
+        @additional_properties = value
+      end
+
+      def strict(value = nil)
+        return @strict ||= true if value.nil?
+        @strict = value
+      end
+
       def string(name = nil, enum: nil, description: nil, required: true)
         add_property(name, build_property_schema(:string, enum: enum, description: description), required: required)
       end
 
       def number(name = nil, description: nil, required: true)
         add_property(name, build_property_schema(:number, description: description), required: required)
+      end
+
+      def integer(name = nil, description: nil, required: true)
+        add_property(name, build_property_schema(:integer, description: description), required: required)
       end
 
       def boolean(name = nil, description: nil, required: true)
@@ -94,6 +108,8 @@ module RubyLLM
           {type: "string", enum: options[:enum], description: options[:description]}.compact
         when :number
           {type: "number", description: options[:description]}.compact
+        when :integer
+          {type: "integer", description: options[:description]}.compact
         when :boolean
           {type: "boolean", description: options[:description]}.compact
         when :null
@@ -106,7 +122,7 @@ module RubyLLM
             type: "object",
             properties: sub_schema.properties,
             required: sub_schema.required_properties,
-            additionalProperties: false,
+            additionalProperties: additional_properties,
             description: options[:description]
           }.compact
         else
@@ -153,8 +169,8 @@ module RubyLLM
           :type => "object",
           :properties => self.class.properties,
           :required => self.class.required_properties,
-          :additionalProperties => false,
-          :strict => true,
+          :additionalProperties => self.class.additional_properties,
+          :strict => self.class.strict,
           "$defs" => self.class.definitions
         }
       }
@@ -173,7 +189,7 @@ module RubyLLM
     end
 
     def respond_to_missing?(method_name, include_private = false)
-      %i[string number boolean array object any_of null].include?(method_name) || super
+      %i[string number integer boolean array object any_of null].include?(method_name) || super
     end
   end
 end

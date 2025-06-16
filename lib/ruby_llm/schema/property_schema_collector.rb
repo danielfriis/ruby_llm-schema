@@ -21,6 +21,10 @@ module RubyLLM
         @schemas << Schema.build_property_schema(:number, **options)
       end
 
+      def integer(**options)
+        @schemas << Schema.build_property_schema(:integer, **options)
+      end
+
       def boolean(**options)
         @schemas << Schema.build_property_schema(:boolean, **options)
       end

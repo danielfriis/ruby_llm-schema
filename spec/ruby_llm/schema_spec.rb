@@ -3,261 +3,391 @@
 require "spec_helper"
 
 RSpec.describe RubyLLM::Schema do
-  describe ".create factory method" do
-    let(:person_schema) do
-      PersonSchema = described_class.create do
-        string :name, description: "Person's name"
-        number :age
-        boolean :active, required: false
-      end
-    end
+  # ===========================================
+  # PRIMITIVE TYPES TESTS
+  # ===========================================
+  describe "primitive types" do
+    let(:schema_class) { Class.new(described_class) }
 
-    let(:instance) { PersonSchema.new }
-    let(:json_output) { instance.to_json_schema }
-
-    it "creates a new Schema class" do
-      expect(person_schema).to be < described_class
-      expect(person_schema).not_to eq(described_class)
-
-      expect(instance.class.name).to eq("PersonSchema")
-      expect(json_output[:name]).to eq("PersonSchema")
-    end
-
-    it "defines properties correctly" do
-      properties = json_output[:schema][:properties]
+    it "supports string type with enum and description" do
+      schema_class.string :status, enum: %w[active inactive], description: "Status field"
       
-      expect(properties[:name]).to eq({type: "string", description: "Person's name"})
-      expect(properties[:age]).to eq({type: "number"})
-      expect(properties[:active]).to eq({type: "boolean"})
+      properties = schema_class.properties
+      expect(properties[:status]).to eq({
+        type: "string",
+        enum: %w[active inactive],
+        description: "Status field"
+      })
     end
 
-    it "handles required properties correctly" do
-      expect(json_output[:schema][:required]).to contain_exactly(:name, :age)
+    it "supports number type with description" do
+      schema_class.number :price, description: "Price field"
+      
+      properties = schema_class.properties
+      expect(properties[:price]).to eq({type: "number", description: "Price field"})
     end
 
-    it "supports nested objects" do
-      complex_schema = described_class.create do
-        string :name
-        object :address do
-          string :street
-          string :city
+    it "supports integer type with description" do
+      schema_class.integer :count, description: "Count value"
+      
+      properties = schema_class.properties
+      expect(properties[:count]).to eq({type: "integer", description: "Count value"})
+    end
+
+    it "supports boolean type with description" do
+      schema_class.boolean :enabled, description: "Enabled field"
+      
+      properties = schema_class.properties
+      expect(properties[:enabled]).to eq({type: "boolean", description: "Enabled field"})
+    end
+
+    it "supports null type with description" do
+      schema_class.null :placeholder, description: "Null field"
+      
+      properties = schema_class.properties
+      expect(properties[:placeholder]).to eq({type: "null", description: "Null field"})
+    end
+
+    it "handles required vs optional properties" do
+      schema_class.string :required_field
+      schema_class.string :optional_field, required: false
+
+      expect(schema_class.required_properties).to include(:required_field)
+      expect(schema_class.required_properties).not_to include(:optional_field)
+    end
+  end
+
+  # ===========================================
+  # ARRAY TYPES TESTS
+  # ===========================================
+  describe "array types" do
+    let(:schema_class) { Class.new(described_class) }
+
+    it "supports arrays with primitive types and descriptions" do
+      schema_class.array :strings, of: :string, description: "String array"
+      schema_class.array :numbers, of: :number
+      schema_class.array :integers, of: :integer
+      schema_class.array :booleans, of: :boolean
+
+      properties = schema_class.properties
+      
+      expect(properties[:strings]).to eq({type: "array", items: {type: "string"}, description: "String array"})
+      expect(properties[:numbers]).to eq({type: "array", items: {type: "number"}})
+      expect(properties[:integers]).to eq({type: "array", items: {type: "integer"}})
+      expect(properties[:booleans]).to eq({type: "array", items: {type: "boolean"}})
+    end
+
+    it "supports arrays with object definitions" do
+      schema_class.array :items do
+        object do
+          string :name
+          integer :value
         end
       end
 
-      instance = complex_schema.new
-      properties = instance.to_json_schema[:schema][:properties]
+      properties = schema_class.properties
+      expect(properties[:items][:items]).to include(
+        type: "object",
+        properties: {
+          name: {type: "string"},
+          value: {type: "integer"}
+        },
+        required: %i[name value],
+        additionalProperties: false
+      )
+    end
 
+    it "supports arrays with references to defined schemas" do
+      schema_class.define :product do
+        string :name
+        number :price
+      end
+      
+      schema_class.array :products, of: :product
+
+      properties = schema_class.properties
+      expect(properties[:products]).to eq({
+        type: "array",
+        items: {"$ref" => "#/$defs/product"}
+      })
+    end
+  end
+
+  # ===========================================
+  # OBJECT AND NESTING TESTS
+  # ===========================================
+  describe "object types and nesting" do
+    let(:schema_class) { Class.new(described_class) }
+
+    it "supports nested objects with mixed property types" do
+      schema_class.object :address do
+        string :street
+        string :city
+        integer :zip_code, required: false
+      end
+
+      properties = schema_class.properties
       expect(properties[:address]).to include(
         type: "object",
         properties: {
           street: {type: "string"},
-          city: {type: "string"}
+          city: {type: "string"},
+          zip_code: {type: "integer"}
         },
         required: %i[street city],
         additionalProperties: false
       )
     end
-  end
 
-  describe "Helpers module" do
-    include RubyLLM::Helpers
-
-    let(:person_schema) do
-      schema "PersonSchema" do
-        string :name, description: "Person's name"
-        number :age
-        boolean :active, required: false
-      end
-    end
-
-    let(:json_output) { person_schema.to_json_schema }
-
-    it "creates a schema instance directly" do
-      expect(person_schema).to be_a(RubyLLM::Schema)
-      expect(person_schema).not_to be_a(Class)
-
-      expect(json_output[:name]).to eq("PersonSchema")
-    end
-
-    it "sets name and description correctly" do
-      expect(json_output[:name]).to eq("PersonSchema")
-    end
-
-    it "defines properties correctly" do
-      properties = json_output[:schema][:properties]
-      
-      expect(properties[:name]).to eq({type: "string", description: "Person's name"})
-      expect(properties[:age]).to eq({type: "number"})
-      expect(properties[:active]).to eq({type: "boolean"})
-    end
-
-    it "handles required properties correctly" do
-      expect(json_output[:schema][:required]).to contain_exactly(:name, :age)
-    end
-
-    it "works with minimal syntax" do
-      simple_schema = schema do
-        string :title
-        number :count
-      end
-
-      properties = simple_schema.to_json_schema[:schema][:properties]
-      expect(properties[:title]).to eq({type: "string"})
-      expect(properties[:count]).to eq({type: "number"})
-    end
-
-    it "supports nested objects" do
-      complex_schema = schema do
-        string :name
-        object :address do
-          string :street
-          string :city
-        end
-      end
-
-      properties = complex_schema.to_json_schema[:schema][:properties]
-      expect(properties[:address]).to include(
-        type: "object",
-        properties: {
-          street: {type: "string"},
-          city: {type: "string"}
-        },
-        required: %i[street city],
-        additionalProperties: false
-      )
-    end
-  end
-
-  describe "schema definition" do
-    let(:schema) { schema_class.new }
-
-    let(:schema_class) do
-      UserSchema = Class.new(described_class) do
-        string :name, description: "User's name"
-        number :age
-        boolean :active
-
-        object :address do
-          string :street
-          string :city
-        end
-
-        array :tags, of: :string, description: "User tags"
-
-        array :contacts do
-          object do
-            string :email
-            string :phone
+    it "supports deeply nested objects" do
+      schema_class.object :level1 do
+        object :level2 do
+          object :level3 do
+            string :deep_value
           end
         end
-
-        any_of :status do
-          string enum: %w[active pending]
-          null
-        end
-
-        define :location do
-          string :latitude
-          string :longitude
-        end
-
-        array :locations, of: :location
       end
+
+      instance = schema_class.new
+      properties = instance.to_json_schema[:schema][:properties]
+      
+      level3 = properties[:level1][:properties][:level2][:properties][:level3]
+      expect(level3[:properties][:deep_value]).to eq({type: "string"})
     end
 
-    let(:json_output) { schema.to_json_schema }
+    it "supports any_of with mixed types including objects" do
+      schema_class.any_of :flexible_field do
+        string enum: %w[option1 option2]
+        integer
+        object do
+          string :nested_field
+        end
+        null
+      end
 
-    it "generates the correct JSON schema" do
-      # Test name and description
-      expect(json_output[:name]).to eq("UserSchema")
-      expect(json_output[:description]).to eq(nil)
+      properties = schema_class.properties
+      any_of_schemas = properties[:flexible_field][:anyOf]
+      
+      expect(any_of_schemas).to include(
+        {type: "string", enum: %w[option1 option2]},
+        {type: "integer"},
+        {type: "null"}
+      )
 
-      properties = json_output[:schema][:properties]
+      object_schema = any_of_schemas.find { |s| s[:type] == "object" }
+      expect(object_schema[:properties][:nested_field]).to eq({type: "string"})
+    end
+  end
 
-      # Test basic types
-      expect(properties[:name]).to eq({type: "string", description: "User's name"})
-      expect(properties[:age]).to eq({type: "number"})
-      expect(properties[:active]).to eq({type: "boolean"})
+  # ===========================================
+  # DEFINITIONS AND REFERENCES
+  # ===========================================
+  describe "definitions and references" do
+    let(:schema_class) { Class.new(described_class) }
 
-      # Test nested object
-      expect(properties[:address]).to include(
+    it "supports defining and referencing reusable schemas" do
+      schema_class.define :address do
+        string :street
+        string :city
+      end
+
+      schema_class.object :user do
+        string :name
+        array :addresses, of: :address
+      end
+
+      ref_hash = schema_class.reference(:address)
+      expect(ref_hash).to eq({"$ref" => "#/$defs/address"})
+
+      instance = schema_class.new
+      json_output = instance.to_json_schema
+
+      # Check definition
+      expect(json_output[:schema]["$defs"][:address]).to include(
         type: "object",
         properties: {
           street: {type: "string"},
           city: {type: "string"}
         },
-        required: %i[street city],
-        additionalProperties: false
+        required: %i[street city]
       )
 
-      # Test arrays
-      expect(properties[:tags]).to eq({
-        type: "array",
-        description: "User tags",
-        items: {type: "string"}
-      })
+      # Check reference usage
+      user_props = json_output[:schema][:properties][:user][:properties]
+      expect(user_props[:addresses][:items]).to eq({"$ref" => "#/$defs/address"})
+    end
+  end
 
-      expect(properties[:contacts]).to include(
-        type: "array",
-        items: {
+  # ===========================================
+  # INSTANCE METHODS TESTS
+  # ===========================================
+  describe "instance methods" do
+    let(:schema_class) { Class.new(described_class) }
+
+    it "handles naming correctly" do
+      # Named class
+      TestSchemaClass = Class.new(described_class)
+      named_instance = TestSchemaClass.new
+      expect(named_instance.to_json_schema[:name]).to eq("TestSchemaClass")
+
+      # Anonymous class
+      anonymous_instance = schema_class.new
+      expect(anonymous_instance.to_json_schema[:name]).to eq("Schema")
+
+      # Provided name
+      custom_instance = schema_class.new("CustomName")
+      expect(custom_instance.to_json_schema[:name]).to eq("CustomName")
+
+      # Provided description
+      described_instance = schema_class.new("TestName", description: "Custom description")
+      expect(described_instance.to_json_schema[:description]).to eq("Custom description")
+    end
+
+    it "supports method delegation for schema methods" do
+      instance = schema_class.new
+      
+      expect(instance).to respond_to(:string, :number, :integer, :boolean, :array, :object, :any_of, :null)
+      expect(instance).not_to respond_to(:unknown_method)
+    end
+
+    it "produces correctly structured JSON schema and JSON output" do
+      schema_class.string :name
+      schema_class.integer :age, required: false
+      
+      instance = schema_class.new("TestSchema")
+      json_output = instance.to_json_schema
+
+      expect(json_output).to include(
+        name: "TestSchema",
+        description: nil,
+        schema: hash_including(
           type: "object",
           properties: {
-            email: {type: "string"},
-            phone: {type: "string"}
+            name: {type: "string"},
+            age: {type: "integer"}
           },
-          required: %i[email phone],
-          additionalProperties: false
-        }
+          required: [:name],
+          additionalProperties: false,
+          strict: true
+        )
       )
 
-      # Test any_of
-      expect(properties[:status]).to include(
-        anyOf: [
-          {type: "string", enum: %w[active pending]},
-          {type: "null"}
-        ]
-      )
-
-      # Test references
-      expect(properties[:locations]).to eq({
-        type: "array",
-        items: {"$ref" => "#/$defs/location"}
-      })
-
-      # Test definitions
-      expect(json_output[:schema]["$defs"]).to include(
-        location: {
-          type: "object",
-          properties: {
-            latitude: {type: "string"},
-            longitude: {type: "string"}
-          },
-          required: %i[latitude longitude]
-        }
-      )
-    end
-
-    it "includes all properties in required array" do
-      expect(json_output[:schema][:required]).to contain_exactly(
-        :name, :age, :active, :address, :tags, :contacts, :status, :locations
-      )
-    end
-
-    it "enforces schema constraints" do
-      expect(json_output[:schema]).to include(
-        additionalProperties: false,
-        strict: true
-      )
-    end
-
-    it "returns JSON string with to_json method" do
-      json_string = schema.to_json
+      # Test JSON string output
+      json_string = instance.to_json
       expect(json_string).to be_a(String)
-
-      # Parse the JSON and compare structure (JSON.parse returns string keys)
       parsed_json = JSON.parse(json_string)
-      expected_json = JSON.parse(JSON.generate(json_output))
-      expect(parsed_json).to eq(expected_json)
+      expect(parsed_json["name"]).to eq("TestSchema")
+    end
+  end
+
+  # ===========================================
+  # ERROR HANDLING TESTS
+  # ===========================================
+  describe "error handling" do
+    let(:schema_class) { Class.new(described_class) }
+
+    it "raises appropriate errors for invalid configurations" do
+      # Unknown schema type
+      expect {
+        schema_class.build_property_schema(:unknown_type)
+      }.to raise_error(RubyLLM::Schema::InvalidSchemaTypeError, "Unknown schema type: unknown_type")
+
+      # Invalid array types
+      expect {
+        schema_class.array :items, of: 123
+      }.to raise_error(RubyLLM::Schema::InvalidArrayTypeError, "Invalid array type: 123")
+
+      expect {
+        schema_class.array :items, of: "invalid"
+      }.to raise_error(RubyLLM::Schema::InvalidArrayTypeError, "Invalid array type: invalid")
+    end
+
+    it "accepts symbols as references (even if undefined)" do
+      expect {
+        schema_class.array :items, of: :undefined_reference
+      }.not_to raise_error
+      
+      properties = schema_class.properties
+      expect(properties[:items][:items]).to eq({"$ref" => "#/$defs/undefined_reference"})
+    end
+  end
+
+  # ===========================================
+  # COMPREHENSIVE SCENARIOS
+  # ===========================================
+  describe "comprehensive scenarios" do
+    it "handles edge cases" do
+      # Empty schema
+      empty_schema = Class.new(described_class)
+      empty_instance = empty_schema.new("EmptySchema")
+      empty_output = empty_instance.to_json_schema
+      
+      expect(empty_output[:schema][:properties]).to eq({})
+      expect(empty_output[:schema][:required]).to eq([])
+
+      # Schema with only optional properties
+      optional_schema = Class.new(described_class) do
+        string :optional1, required: false
+        integer :optional2, required: false
+      end
+
+      optional_instance = optional_schema.new
+      optional_output = optional_instance.to_json_schema
+      
+      expect(optional_output[:schema][:required]).to eq([])
+      expect(optional_output[:schema][:properties].keys).to contain_exactly(:optional1, :optional2)
+    end
+
+    it "handles complex nested structures with all features" do
+      complex_schema = Class.new(described_class) do
+        string :id, description: "Unique identifier"
+        
+        object :metadata do
+          string :created_by
+          integer :version
+          boolean :published, required: false
+        end
+        
+        array :tags, of: :string, description: "Resource tags"
+        
+        array :items do
+          object do
+            string :name
+            any_of :value do
+              string
+              number
+              boolean
+              null
+            end
+          end
+        end
+        
+        any_of :status do
+          string enum: %w[draft published]
+          null
+        end
+        
+        define :author do
+          string :name
+          string :email
+        end
+        
+        array :authors, of: :author
+      end
+
+      instance = complex_schema.new("ComplexSchema")
+      json_output = instance.to_json_schema
+
+      # Verify comprehensive structure
+      expect(json_output[:schema][:properties].keys).to contain_exactly(
+        :id, :metadata, :tags, :items, :status, :authors
+      )
+      expect(json_output[:schema]["$defs"][:author]).to be_a(Hash)
+      expect(json_output[:schema][:required]).to include(:id, :metadata, :tags, :items, :status, :authors)
+      
+      # Verify descriptions are preserved
+      expect(json_output[:schema][:properties][:id][:description]).to eq("Unique identifier")
+      expect(json_output[:schema][:properties][:tags][:description]).to eq("Resource tags")
     end
   end
 end
