@@ -50,6 +50,12 @@ RSpec.describe RubyLLM::Schema, "class inheritance approach" do
         expect(instance.to_json_schema[:schema][:strict]).to eq(true)
       end
 
+      it "can be set to false (explicit)" do
+        schema_class.strict(false)
+        instance = schema_class.new
+        expect(instance.to_json_schema[:schema][:strict]).to eq(false)
+      end
+
       it "defaults to true when not provided" do
         instance = schema_class.new
         expect(instance.to_json_schema[:schema][:strict]).to eq(true)
