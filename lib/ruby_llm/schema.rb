@@ -180,7 +180,7 @@ module RubyLLM
       
       {
         name: @name,
-        description: @description,
+        description: @description || self.class.description,
         schema: {
           :type => "object",
           :properties => self.class.properties,
