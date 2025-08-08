@@ -20,6 +20,33 @@ RSpec.describe RubyLLM::Schema do
       })
     end
 
+    it "supports string type with additional properties" do
+      schema_class.string :email, format: "email", min_length: 5, max_length: 100, pattern: "\\S+@\\S+", description: "Email field"
+      
+      properties = schema_class.properties
+      expect(properties[:email]).to eq({
+        type: "string",
+        format: "email",
+        minLength: 5,
+        maxLength: 100,
+        pattern: "\\S+@\\S+",
+        description: "Email field"
+      })
+    end
+
+    it "supports number type with constraints" do
+      schema_class.number :price, minimum: 0, maximum: 1000, multiple_of: 0.01, description: "Price field"
+      
+      properties = schema_class.properties
+      expect(properties[:price]).to eq({
+        type: "number",
+        minimum: 0,
+        maximum: 1000,
+        multipleOf: 0.01,
+        description: "Price field"
+      })
+    end
+
     it "supports number type with description" do
       schema_class.number :price, description: "Price field"
       
@@ -75,6 +102,13 @@ RSpec.describe RubyLLM::Schema do
       expect(properties[:numbers]).to eq({type: "array", items: {type: "number"}})
       expect(properties[:integers]).to eq({type: "array", items: {type: "integer"}})
       expect(properties[:booleans]).to eq({type: "array", items: {type: "boolean"}})
+    end
+
+    it "supports arrays with constraints" do
+      schema_class.array :strings, of: :string, min_items: 1, max_items: 10, description: "String array"
+      
+      properties = schema_class.properties
+      expect(properties[:strings]).to eq({type: "array", items: {type: "string"}, minItems: 1, maxItems: 10, description: "String array"})
     end
 
     it "supports arrays with object definitions" do

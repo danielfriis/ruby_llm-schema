@@ -7,7 +7,7 @@ A Ruby DSL for creating JSON schemas with a clean, Rails-inspired API. Perfect f
 ```ruby
 class PersonSchema < RubyLLM::Schema
   string :name, description: "Person's full name"
-  number :age, description: "Age in years"
+  number :age, description: "Age in years", minimum: 0, maximum: 120
   boolean :active, required: false
   
   object :address do
@@ -20,7 +20,7 @@ class PersonSchema < RubyLLM::Schema
   
   array :contacts do
     object do
-      string :email
+      string :email, format: "email"
       string :phone, required: false
     end
   end
@@ -130,7 +130,14 @@ puts person_schema.to_json
 string :name                          # Required string
 string :title, required: false        # Optional string
 string :status, enum: ["on", "off"]   # String with enum values
+string :email, format: "email"        # String with format validation
+string :code, min_length: 3, max_length: 10  # String with length constraints
+string :pattern_field, pattern: "\\d+"  # String with regex pattern
+
 number :count                         # Required number
+number :price, minimum: 0, maximum: 100  # Number with range constraints
+number :amount, multiple_of: 0.01     # Number with precision constraints
+
 integer :id                           # Required integer
 boolean :active                       # Required boolean
 null :placeholder                     # Null type
@@ -141,6 +148,7 @@ null :placeholder                     # Null type
 ```ruby
 array :tags, of: :string              # Array of strings
 array :scores, of: :number            # Array of numbers
+array :items, min_items: 1, max_items: 10  # Array with size constraints
 
 array :items do                       # Array of objects
   object do

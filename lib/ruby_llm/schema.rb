@@ -34,16 +34,39 @@ module RubyLLM
         @strict = value
       end
 
-      def string(name = nil, enum: nil, description: nil, required: true)
-        add_property(name, build_property_schema(:string, enum: enum, description: description), required: required)
+      def string(name = nil, enum: nil, description: nil, required: true, min_length: nil, max_length: nil, pattern: nil, format: nil)
+        options = {
+          enum: enum,
+          description: description,
+          minLength: min_length,
+          maxLength: max_length,
+          pattern: pattern,
+          format: format
+        }.compact
+        
+        add_property(name, build_property_schema(:string, **options), required: required)
       end
 
-      def number(name = nil, description: nil, required: true)
-        add_property(name, build_property_schema(:number, description: description), required: required)
+      def number(name = nil, description: nil, required: true, minimum: nil, maximum: nil, multiple_of: nil)
+        options = {
+          description: description,
+          minimum: minimum,
+          maximum: maximum,
+          multipleOf: multiple_of
+        }.compact
+        
+        add_property(name, build_property_schema(:number, **options), required: required)
       end
 
-      def integer(name = nil, description: nil, required: true)
-        add_property(name, build_property_schema(:integer, description: description), required: required)
+      def integer(name = nil, description: nil, required: true, minimum: nil, maximum: nil, multiple_of: nil)
+        options = {
+          description: description,
+          minimum: minimum,
+          maximum: maximum,
+          multipleOf: multiple_of
+        }.compact
+        
+        add_property(name, build_property_schema(:integer, **options), required: required)
       end
 
       def boolean(name = nil, description: nil, required: true)
@@ -58,13 +81,16 @@ module RubyLLM
         add_property(name, build_property_schema(:object, description: description, &block), required: required)
       end
 
-      def array(name, of: nil, description: nil, required: true, &block)
+      def array(name, of: nil, description: nil, required: true, min_items: nil, max_items: nil, unique_items: nil, &block)
         items = determine_array_items(of, &block)
 
         add_property(name, {
           type: "array",
           description: description,
-          items: items
+          items: items,
+          minItems: min_items,
+          maxItems: max_items,
+          uniqueItems: unique_items
         }.compact, required: required)
       end
 
@@ -75,6 +101,13 @@ module RubyLLM
           description: description,
           anyOf: schemas
         }.compact, required: required)
+      end
+
+      def optional(name, description: nil, &block)
+        any_of(name, description: description) do
+          instance_eval(&block)
+          null
+        end
       end
 
       def define(name, &)
@@ -107,11 +140,31 @@ module RubyLLM
       def build_property_schema(type, **options, &)
         case type
         when :string
-          {type: "string", enum: options[:enum], description: options[:description]}.compact
+          {
+            type: "string",
+            enum: options[:enum],
+            description: options[:description],
+            minLength: options[:minLength],
+            maxLength: options[:maxLength],
+            pattern: options[:pattern],
+            format: options[:format]
+          }.compact
         when :number
-          {type: "number", description: options[:description]}.compact
+          {
+            type: "number",
+            description: options[:description],
+            minimum: options[:minimum],
+            maximum: options[:maximum],
+            multipleOf: options[:multipleOf]
+          }.compact
         when :integer
-          {type: "integer", description: options[:description]}.compact
+          {
+            type: "integer",
+            description: options[:description],
+            minimum: options[:minimum],
+            maximum: options[:maximum],
+            multipleOf: options[:multipleOf]
+          }.compact
         when :boolean
           {type: "boolean", description: options[:description]}.compact
         when :null
