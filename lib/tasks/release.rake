@@ -7,7 +7,17 @@ namespace :release do
     
     puts "Releasing version #{version}..."
     
-    system "git tag v#{version}"
+    # Prompt for release message
+    print "Enter release message (optional): "
+    release_message = STDIN.gets.chomp
+    
+    # Create git tag with message
+    if release_message.empty?
+      system "git tag v#{version}"
+    else
+      system "git tag -a v#{version} -m \"#{release_message}\""
+    end
+    
     system "git push origin main"
     system "git push origin v#{version}"
 
