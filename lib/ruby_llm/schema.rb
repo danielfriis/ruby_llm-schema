@@ -58,15 +58,8 @@ module RubyLLM
         add_property(name, build_property_schema(:number, **options), required: required)
       end
 
-      def integer(name = nil, description: nil, required: true, minimum: nil, maximum: nil, multiple_of: nil)
-        options = {
-          description: description,
-          minimum: minimum,
-          maximum: maximum,
-          multipleOf: multiple_of
-        }.compact
-        
-        add_property(name, build_property_schema(:integer, **options), required: required)
+      def integer(name = nil, description: nil, required: true)
+        add_property(name, build_property_schema(:integer, description: description), required: required)
       end
 
       def boolean(name = nil, description: nil, required: true)
@@ -81,7 +74,7 @@ module RubyLLM
         add_property(name, build_property_schema(:object, description: description, &block), required: required)
       end
 
-      def array(name, of: nil, description: nil, required: true, min_items: nil, max_items: nil, unique_items: nil, &block)
+      def array(name, of: nil, description: nil, required: true, min_items: nil, max_items: nil, &block)
         items = determine_array_items(of, &block)
 
         add_property(name, {
@@ -89,8 +82,7 @@ module RubyLLM
           description: description,
           items: items,
           minItems: min_items,
-          maxItems: max_items,
-          uniqueItems: unique_items
+          maxItems: max_items
         }.compact, required: required)
       end
 
