@@ -135,7 +135,7 @@ RSpec.describe RubyLLM::Schema, "factory method (.create) approach" do
 
       expect(json_output).to include(
         name: "FactoryConfiguredSchema",
-        description: nil, # Instance description takes precedence
+        description: "Factory test description",
         schema: hash_including(
           type: "object",
           properties: { title: { type: "string" } },
@@ -143,6 +143,22 @@ RSpec.describe RubyLLM::Schema, "factory method (.create) approach" do
           additionalProperties: false,
           strict: true
         )
+      )
+    end
+
+    it "produces correctly structured JSON schema with instance description" do
+      configured_class = described_class.create do
+        description "Factory test description"
+        additional_properties false
+        string :title
+      end
+
+      instance = configured_class.new("FactoryConfiguredSchema", description: "Instance description")
+      json_output = instance.to_json_schema
+
+      expect(json_output).to include(
+        name: "FactoryConfiguredSchema",
+        description: "Instance description",
       )
     end
   end

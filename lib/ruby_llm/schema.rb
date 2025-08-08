@@ -30,7 +30,9 @@ module RubyLLM
       end
 
       def strict(value = nil)
-        return @strict ||= true if value.nil?
+        if value.nil?
+          return @strict.nil? ? (@strict = true) : @strict
+        end
         @strict = value
       end
 
@@ -223,7 +225,7 @@ module RubyLLM
       
       {
         name: @name,
-        description: @description,
+        description: @description || self.class.description,
         schema: {
           :type => "object",
           :properties => self.class.properties,

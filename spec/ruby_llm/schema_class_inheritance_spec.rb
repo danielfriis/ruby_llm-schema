@@ -25,6 +25,12 @@ RSpec.describe RubyLLM::Schema, "class inheritance approach" do
         expect(schema_class.description).to eq("Class-level description")
       end
 
+      it "applies to the schema properly" do
+        schema_class.description("Class-level description")
+        instance = schema_class.new
+        expect(instance.to_json_schema[:description]).to eq("Class-level description")
+      end
+
       it "defaults to nil when not provided" do
         expect(schema_class.description).to be_nil
       end
@@ -48,6 +54,12 @@ RSpec.describe RubyLLM::Schema, "class inheritance approach" do
         schema_class.strict(true)
         instance = schema_class.new
         expect(instance.to_json_schema[:schema][:strict]).to eq(true)
+      end
+
+      it "can be set to false (explicit)" do
+        schema_class.strict(false)
+        instance = schema_class.new
+        expect(instance.to_json_schema[:schema][:strict]).to eq(false)
       end
 
       it "defaults to true when not provided" do
@@ -106,7 +118,7 @@ RSpec.describe RubyLLM::Schema, "class inheritance approach" do
 
       expect(json_output).to include(
         name: "ConfiguredSchema",
-        description: nil, # Instance description takes precedence
+        description: "Test description",
         schema: hash_including(
           type: "object",
           properties: { title: { type: "string" } },
@@ -114,6 +126,22 @@ RSpec.describe RubyLLM::Schema, "class inheritance approach" do
           additionalProperties: false,
           strict: true
         )
+      )
+    end
+
+    it "produces correctly structured JSON schema with instance description" do
+      configured_class = Class.new(described_class) do
+        description "Test description"
+        additional_properties false
+        string :title
+      end
+
+      instance = configured_class.new("ConfiguredSchema", description: "Instance description")
+      json_output = instance.to_json_schema
+
+      expect(json_output).to include(
+        name: "ConfiguredSchema",
+        description: "Instance description",
       )
     end
   end
