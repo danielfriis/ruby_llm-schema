@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    ruby_llm-schema (0.1.0)
+    ruby_llm-schema (0.1.5)
 
 GEM
   remote: https://rubygems.org/
