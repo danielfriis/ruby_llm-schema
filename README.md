@@ -2,6 +2,17 @@
 
 A Ruby DSL for creating JSON schemas with a clean, Rails-inspired API. Perfect for defining structured data schemas for LLM function calling or structured outputs.
 
+## Use Cases
+
+Structured output is a powerful tool for LLMs to generate consistent and predictable responses.
+
+Some ideal use cases:
+
+- Extracting *metadata, topics, and summary* from articles or blog posts
+- Organizing unstructured feedback or reviews with *sentiment and summary* 
+- Defining structured *actions* from user messages or emails
+- Extracting *entities and relationships* from documents
+
 ### Simple Example
 
 ```ruby
@@ -122,28 +133,75 @@ end
 puts person_schema.to_json
 ```
 
-## Field Types
+## Schema Property Types
 
-### Primitive Types
+A schema is a collection of properties, which can be of different types. Each type has its own set of properties you can set.
+
+All property types can (along with the required `name` key) be set with a `description` and a `required` flag (default is `true`).
 
 ```ruby
-string :name                          # Required string
-string :title, required: false        # Optional string
-string :status, enum: ["on", "off"]   # String with enum values
-string :email, format: "email"        # String with format validation
-string :code, min_length: 3, max_length: 10  # String with length constraints
-string :pattern_field, pattern: "\\d+"  # String with regex pattern
-
-number :count                         # Required number
-number :price, minimum: 0, maximum: 100  # Number with range constraints
-number :amount, multiple_of: 0.01     # Number with precision constraints
-
-integer :id                           # Required integer
-boolean :active                       # Required boolean
-null :placeholder                     # Null type
+string :name, description: "Person's full name"
+number :age, description: "Person's age", required: false
+boolean :is_active, description: "Whether the person is active"
+null :placeholder, description: "A placeholder property"
 ```
 
+Please consult the LLM provider documentation for any limitations or restrictions. For example, as of now, OpenAI requires all properties to be required. In that case, you can use the `optional` method to make a property optional.
+
+### Strings
+
+String types support the following properties:
+
+- `enum`: an array of allowed values (e.g. `enum: ["on", "off"]`)
+- `pattern`: a regex pattern (e.g. `pattern: "\\d+"`)
+- `format`: a format string (e.g. `format: "email"`)
+- `min_length`: the minimum length of the string (e.g. `min_length: 3`)
+- `max_length`: the maximum length of the string (e.g. `max_length: 10`)
+
+Please consult the LLM provider documentation for the available formats and patterns.
+
+```ruby
+string :name, description: "Person's full name"
+string :email, format: "email"
+string :phone, pattern: "\\d+"
+string :status, enum: ["on", "off"]
+string :code, min_length: 3, max_length: 10
+```
+
+### Numbers
+
+Number types support the following properties:
+
+- `multiple_of`: a multiple of the number (e.g. `multiple_of: 0.01`)
+- `minimum`: the minimum value of the number (e.g. `minimum: 0`)
+- `maximum`: the maximum value of the number (e.g. `maximum: 100`)
+
+```ruby
+number :price, minimum: 0, maximum: 100
+number :amount, multiple_of: 0.01
+```
+
+### Booleans
+
+```ruby
+boolean :is_active
+```
+
+Boolean types doesn't support any additional properties.
+
+### Null
+
+```ruby
+null :placeholder
+```
+
+Null types doesn't support any additional properties.
+
 ### Arrays
+
+An array is a list of items. You can set the type of the items in the array with the `of` option or by passing a block with the `object` method.
+
+An array can have a `min_items` and `max_items` option to set the minimum and maximum number of items in the array.
 
 ```ruby
 array :tags, of: :string              # Array of strings
@@ -160,6 +218,8 @@ end
 
 ### Objects
 
+Objects types expect a block with the properties of the object.
+
 ```ruby
 object :user do
   string :name
@@ -174,6 +234,8 @@ end
 
 ### Union Types (anyOf)
 
+Union types are a way to specify that a property can be one of several types.
+
 ```ruby
 any_of :value do
   string
@@ -187,7 +249,23 @@ any_of :identifier do
 end
 ```
 
+### Optional
+
+Optional types are a way to specify that a property is optional. Under the hood, this is a union type with a `null` type.
+
+```ruby
+optional :name, description: "Person's full name"
+
+# is the same as
+any_of :name, description: "Person's full name" do
+  string
+  null
+end
+```
+
 ### Schema Definitions and References
+
+You can define sub-schemas and reference them in other schemas.
 
 ```ruby
 class MySchema < RubyLLM::Schema
