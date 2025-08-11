@@ -146,7 +146,14 @@ boolean :is_active, description: "Whether the person is active"
 null :placeholder, description: "A placeholder property"
 ```
 
-⚠️ Please consult the LLM provider documentation for any limitations or restrictions. For example, as of now, OpenAI requires all properties to be required. In that case, you can use the `optional` method to make a property optional.
+⚠️ Please consult the LLM provider documentation for any limitations or restrictions. For example, as of now, OpenAI requires all properties to be required. In that case, you can use the `any_of` method to make a property optional.
+
+```ruby
+any_of :name, description: "Person's full name" do
+  string
+  null
+end
+```
 
 ### Strings
 
@@ -246,20 +253,6 @@ end
 any_of :identifier do
   string description: "Username"
   number description: "User ID"
-end
-```
-
-### Optionals
-
-Optional types are a way to specify that a property is optional. Under the hood, this is a union type with a `null` type.
-
-```ruby
-optional :name, description: "Person's full name"
-
-# is the same as
-any_of :name, description: "Person's full name" do
-  string
-  null
 end
 ```
 
