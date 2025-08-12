@@ -36,6 +36,12 @@ module RubyLLM
       def object(...)
         @schemas << Schema.build_property_schema(:object, ...)
       end
+
+      def any_of(&block)
+        union = PropertySchemaCollector.new
+        union.collect(&block)
+        @schemas << { anyOf: union.schemas }
+      end
     end
   end
 end

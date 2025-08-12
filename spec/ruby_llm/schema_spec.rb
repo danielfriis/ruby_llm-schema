@@ -145,6 +145,51 @@ RSpec.describe RubyLLM::Schema do
         items: {"$ref" => "#/$defs/product"}
       })
     end
+
+    it "supports arrays with union types (anyOf)" do
+      schema_class.array :steps do
+        any_of do
+          object do
+            string :type, enum: ["delay"]
+            number :duration
+          end
+
+          object do
+            string :type, enum: ["email"]
+            string :subject
+            string :template
+          end
+        end
+      end
+
+      properties = schema_class.properties
+      expect(properties[:steps]).to eq({
+        type: "array",
+        items: {
+          anyOf: [
+            {
+              type: "object",
+              properties: {
+                type: { type: "string", enum: ["delay"] },
+                duration: { type: "number" }
+              },
+              required: [:type, :duration],
+              additionalProperties: false
+            },
+            {
+              type: "object",
+              properties: {
+                type: { type: "string", enum: ["email"] },
+                subject: { type: "string" },
+                template: { type: "string" }
+              },
+              required: [:type, :subject, :template],
+              additionalProperties: false
+            }
+          ]
+        }
+      })
+    end
   end
 
   # ===========================================
