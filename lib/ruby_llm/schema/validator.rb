@@ -32,7 +32,7 @@ module RubyLLM
 
         # Initialize all nodes as WHITE (no mark)
         marks = Hash.new { WHITE }
-
+        
         # Visit each unmarked node
         definitions.each_key do |node|
           visit(node, definitions, marks) if marks[node] == WHITE
@@ -43,7 +43,7 @@ module RubyLLM
       def visit(node, definitions, marks)
         # If node has a permanent mark, return
         return if marks[node] == BLACK
-
+        
         # If node has a temporary mark, we found a cycle
         if marks[node] == GRAY
           raise ValidationError, "Circular reference detected involving '#{node}'"
@@ -51,7 +51,7 @@ module RubyLLM
 
         # Mark node with temporary mark
         marks[node] = GRAY
-
+        
         # Visit all adjacent nodes (dependencies)
         definition = definitions[node]
         if definition && definition[:properties]
@@ -62,14 +62,14 @@ module RubyLLM
             end
           end
         end
-
+        
         # Mark node with permanent mark
         marks[node] = BLACK
       end
 
       def extract_references(property)
         references = []
-
+        
         case property
         when Hash
           if property["$ref"]
@@ -92,4 +92,4 @@ module RubyLLM
       end
     end
   end
-end
+end 

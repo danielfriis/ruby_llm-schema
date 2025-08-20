@@ -79,13 +79,13 @@ RSpec.describe RubyLLM::Schema, "class inheritance approach" do
         string :name, description: "Name field"
         integer :count
         boolean :active, required: false
-
+        
         object :config do
           string :setting
         end
-
+        
         array :tags, of: :string
-
+        
         any_of :status do
           string
           null
@@ -121,7 +121,7 @@ RSpec.describe RubyLLM::Schema, "class inheritance approach" do
         description: "Test description",
         schema: hash_including(
           type: "object",
-          properties: {title: {type: "string"}},
+          properties: { title: { type: "string" } },
           required: [:title],
           additionalProperties: false,
           strict: true
@@ -141,8 +141,8 @@ RSpec.describe RubyLLM::Schema, "class inheritance approach" do
 
       expect(json_output).to include(
         name: "ConfiguredSchema",
-        description: "Instance description"
+        description: "Instance description",
       )
     end
   end
-end
+end 

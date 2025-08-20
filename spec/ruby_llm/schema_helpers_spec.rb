@@ -91,13 +91,13 @@ RSpec.describe RubyLLM::Schema, "helpers module approach" do
         string :name, description: "Name field"
         integer :count
         boolean :active, required: false
-
+        
         object :config do
           string :setting
         end
-
+        
         array :tags, of: :string
-
+        
         any_of :status do
           string
           null
@@ -131,7 +131,7 @@ RSpec.describe RubyLLM::Schema, "helpers module approach" do
         description: "Helper test description",
         schema: hash_including(
           type: "object",
-          properties: {title: {type: "string"}},
+          properties: { title: { type: "string" } },
           required: [:title],
           additionalProperties: false,
           strict: true
@@ -139,4 +139,4 @@ RSpec.describe RubyLLM::Schema, "helpers module approach" do
       )
     end
   end
-end
+end 
