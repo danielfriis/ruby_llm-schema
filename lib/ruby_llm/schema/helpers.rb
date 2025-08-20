@@ -7,4 +7,4 @@ module RubyLLM
       schema_class.new(name, description: description)
     end
   end
-end 
+end
