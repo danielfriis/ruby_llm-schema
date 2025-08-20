@@ -6,7 +6,6 @@ require_relative "schema/errors"
 require_relative "schema/helpers"
 require_relative "schema/validator"
 require "json"
-require "set"
 
 module RubyLLM
   class Schema
@@ -45,7 +44,7 @@ module RubyLLM
           pattern: pattern,
           format: format
         }.compact
-        
+
         add_property(name, build_property_schema(:string, **options), required: required)
       end
 
@@ -56,7 +55,7 @@ module RubyLLM
           maximum: maximum,
           multipleOf: multiple_of
         }.compact
-        
+
         add_property(name, build_property_schema(:number, **options), required: required)
       end
 
@@ -174,6 +173,12 @@ module RubyLLM
             additionalProperties: additional_properties,
             description: options[:description]
           }.compact
+        when :any_of
+          schemas = collect_property_schemas_from_block(&)
+          {
+            anyOf: schemas,
+            description: options[:description]
+          }.compact
         else
           raise InvalidSchemaTypeError, type
         end
@@ -222,7 +227,7 @@ module RubyLLM
 
     def to_json_schema
       validate!  # Validate schema before generating JSON
-      
+
       {
         name: @name,
         description: @description || self.class.description,
