@@ -145,6 +145,15 @@ RSpec.describe RubyLLM::Schema do
         items: {"$ref" => "#/$defs/product"}
       })
     end
+
+    it "supports arrays of anyOf types" do
+      schema_class.array :items do
+        any_of :value do
+          string :alphanumeric
+          number :numeric
+        end
+      end
+    end
   end
 
   # ===========================================
