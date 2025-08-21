@@ -136,8 +136,6 @@ module RubyLLM
         when :any_of
           schemas = collect_property_schemas_from_block(&)
           {
-            type: "anyOf",
-            description: options[:description],
             anyOf: schemas
           }.compact
         else
