@@ -81,7 +81,8 @@ module RubyLLM
         definitions[name] = {
           type: "object",
           properties: sub_schema.properties,
-          required: sub_schema.required_properties
+          required: sub_schema.required_properties,
+          additionalProperties: sub_schema.additional_properties
         }
       end
 
@@ -139,7 +140,7 @@ module RubyLLM
               type: "object",
               properties: sub_schema.properties,
               required: sub_schema.required_properties,
-              additionalProperties: additional_properties,
+              additionalProperties: sub_schema.additional_properties,
               description: options[:description]
             }.compact
           end

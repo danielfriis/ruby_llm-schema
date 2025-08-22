@@ -244,7 +244,8 @@ RSpec.describe RubyLLM::Schema do
           street: {type: "string"},
           city: {type: "string"}
         },
-        required: %i[street city]
+        required: %i[street city],
+        additionalProperties: false
       })
     end
 
@@ -269,7 +270,8 @@ RSpec.describe RubyLLM::Schema do
           street: {type: "string"},
           city: {type: "string"}
         },
-        required: %i[street city]
+        required: %i[street city],
+        additionalProperties: false
       })
     end
   end
