@@ -41,8 +41,8 @@ module RubyLLM
       end
 
       # Complex type methods
-      def object(name = nil, description: nil, required: true, &block)
-        add_property(name, build_property_schema(:object, description: description, &block), required: required)
+      def object(name = nil, reference: nil, description: nil, required: true, &block)
+        add_property(name, build_property_schema(:object, description: description, reference: reference, &block), required: required)
       end
 
       def array(name, of: nil, description: nil, required: true, min_items: nil, max_items: nil, &block)
@@ -123,16 +123,26 @@ module RubyLLM
         when :null
           {type: "null", description: options[:description]}.compact
         when :object
-          sub_schema = Class.new(Schema)
-          sub_schema.class_eval(&)
+          # If the reference option is provided, return the reference
+          return reference(options[:reference]) if options[:reference]
 
-          {
-            type: "object",
-            properties: sub_schema.properties,
-            required: sub_schema.required_properties,
-            additionalProperties: additional_properties,
-            description: options[:description]
-          }.compact
+          sub_schema = Class.new(Schema)
+          
+          # Evaluate the block and capture the result
+          result = sub_schema.class_eval(&)
+          
+          # If the block returned a reference and no properties were added, use the reference
+          if result.is_a?(Hash) && result["$ref"] && sub_schema.properties.empty?
+            result.merge(options[:description] ? {description: options[:description]} : {})
+          else
+            {
+              type: "object",
+              properties: sub_schema.properties,
+              required: sub_schema.required_properties,
+              additionalProperties: additional_properties,
+              description: options[:description]
+            }.compact
+          end
         when :any_of
           schemas = collect_property_schemas_from_block(&)
           {

@@ -220,6 +220,58 @@ RSpec.describe RubyLLM::Schema do
       object_schema = any_of_schemas.find { |s| s[:type] == "object" }
       expect(object_schema[:properties][:nested_field]).to eq({type: "string"})
     end
+
+    it "supports reference to a defined schema by block" do
+      schema_class.define :address do
+        string :street
+        string :city
+      end
+      
+      schema_class.object :user do
+        string :name
+        object :address do
+          reference :address
+        end
+      end
+
+      instance = schema_class.new
+      json_output = instance.to_json_schema
+
+      expect(json_output[:schema][:properties][:user][:properties][:address]).to eq({"$ref" => "#/$defs/address"})
+      expect(json_output[:schema]["$defs"][:address]).to eq({
+        type: "object",
+        properties: {
+          street: {type: "string"},
+          city: {type: "string"}
+        },
+        required: %i[street city]
+      })
+    end
+
+    it "supports reference to a defined schema by reference option" do
+      schema_class.define :address do
+        string :street
+        string :city
+      end
+      
+      schema_class.object :user do
+        string :name
+        object :address, reference: :address
+      end
+
+      instance = schema_class.new
+      json_output = instance.to_json_schema
+
+      expect(json_output[:schema][:properties][:user][:properties][:address]).to eq({"$ref" => "#/$defs/address"})
+      expect(json_output[:schema]["$defs"][:address]).to eq({
+        type: "object",
+        properties: {
+          street: {type: "string"},
+          city: {type: "string"}
+        },
+        required: %i[street city]
+      })
+    end
   end
 
   # ===========================================

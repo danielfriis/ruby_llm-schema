@@ -271,9 +271,14 @@ class MySchema < RubyLLM::Schema
     string :longitude
   end
   
+  # Using a reference in an array
   array :coordinates, of: :location
-  
-  object :home_location do
+
+  # Using a reference in an object via the `reference` option
+  object :home_location, reference: :location
+
+  # Using a reference in an object via block
+  object :user do
     reference :location
   end
 end
