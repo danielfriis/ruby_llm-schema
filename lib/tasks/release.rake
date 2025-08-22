@@ -2,11 +2,11 @@ namespace :release do
   desc "Release a new version of the gem"
   task :version, [:message] do |t, args|
     # Load the current version from version.rb
-    require_relative '../../lib/ruby_llm/schema/version'
+    require_relative "../../lib/ruby_llm/schema/version"
     version = RubyLlm::Schema::VERSION
-    
+
     puts "Releasing version #{version}..."
-    
+
     # Create git tag with optional message
     # rake release:version["Fix critical bug in schema validation"]
     if args[:message]
@@ -16,7 +16,7 @@ namespace :release do
       system "git tag v#{version}"
       puts "Created lightweight tag v#{version}"
     end
-    
+
     system "git push origin main"
     system "git push origin v#{version}"
 

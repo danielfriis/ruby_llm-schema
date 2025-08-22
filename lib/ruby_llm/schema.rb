@@ -7,13 +7,12 @@ require_relative "schema/validator"
 require_relative "schema/dsl"
 require_relative "schema/json_output"
 require "json"
-require "set"
 
 module RubyLLM
   class Schema
     extend DSL
     include JsonOutput
-    
+
     PRIMITIVE_TYPES = %i[string number integer boolean null].freeze
 
     class << self

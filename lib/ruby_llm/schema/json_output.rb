@@ -5,7 +5,7 @@ module RubyLLM
     module JsonOutput
       def to_json_schema
         validate!  # Validate schema before generating JSON
-        
+
         {
           name: @name,
           description: @description || self.class.description,

@@ -13,7 +13,7 @@ module RubyLLM
           pattern: pattern,
           format: format
         }.compact
-        
+
         add_property(name, build_property_schema(:string, **options), required: required)
       end
 
@@ -24,7 +24,7 @@ module RubyLLM
           maximum: maximum,
           multipleOf: multiple_of
         }.compact
-        
+
         add_property(name, build_property_schema(:number, **options), required: required)
       end
 
@@ -161,7 +161,7 @@ module RubyLLM
       def collect_property_schemas_from_block(&block)
         schemas = []
         schema_builder = self  # Capture the current context that has build_property_schema
-        
+
         context = Object.new
         context.define_singleton_method(:string) { |name = nil, **options| schemas << schema_builder.build_property_schema(:string, **options) }
         context.define_singleton_method(:number) { |name = nil, **options| schemas << schema_builder.build_property_schema(:number, **options) }
@@ -170,7 +170,7 @@ module RubyLLM
         context.define_singleton_method(:null) { |name = nil, **options| schemas << schema_builder.build_property_schema(:null, **options) }
         context.define_singleton_method(:object) { |name = nil, **options, &blk| schemas << schema_builder.build_property_schema(:object, **options, &blk) }
         context.define_singleton_method(:any_of) { |name = nil, **options, &blk| schemas << schema_builder.build_property_schema(:any_of, **options, &blk) }
-        
+
         context.instance_eval(&block)
         schemas
       end

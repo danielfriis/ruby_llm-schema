@@ -11,7 +11,7 @@ RSpec.describe RubyLLM::Schema do
 
     it "supports string type with enum and description" do
       schema_class.string :status, enum: %w[active inactive], description: "Status field"
-      
+
       properties = schema_class.properties
       expect(properties[:status]).to eq({
         type: "string",
@@ -22,7 +22,7 @@ RSpec.describe RubyLLM::Schema do
 
     it "supports string type with additional properties" do
       schema_class.string :email, format: "email", min_length: 5, max_length: 100, pattern: "\\S+@\\S+", description: "Email field"
-      
+
       properties = schema_class.properties
       expect(properties[:email]).to eq({
         type: "string",
@@ -36,7 +36,7 @@ RSpec.describe RubyLLM::Schema do
 
     it "supports number type with constraints" do
       schema_class.number :price, minimum: 0, maximum: 1000, multiple_of: 0.01, description: "Price field"
-      
+
       properties = schema_class.properties
       expect(properties[:price]).to eq({
         type: "number",
@@ -49,28 +49,28 @@ RSpec.describe RubyLLM::Schema do
 
     it "supports number type with description" do
       schema_class.number :price, description: "Price field"
-      
+
       properties = schema_class.properties
       expect(properties[:price]).to eq({type: "number", description: "Price field"})
     end
 
     it "supports integer type with description" do
       schema_class.integer :count, description: "Count value"
-      
+
       properties = schema_class.properties
       expect(properties[:count]).to eq({type: "integer", description: "Count value"})
     end
 
     it "supports boolean type with description" do
       schema_class.boolean :enabled, description: "Enabled field"
-      
+
       properties = schema_class.properties
       expect(properties[:enabled]).to eq({type: "boolean", description: "Enabled field"})
     end
 
     it "supports null type with description" do
       schema_class.null :placeholder, description: "Null field"
-      
+
       properties = schema_class.properties
       expect(properties[:placeholder]).to eq({type: "null", description: "Null field"})
     end
@@ -97,7 +97,7 @@ RSpec.describe RubyLLM::Schema do
       schema_class.array :booleans, of: :boolean
 
       properties = schema_class.properties
-      
+
       expect(properties[:strings]).to eq({type: "array", items: {type: "string"}, description: "String array"})
       expect(properties[:numbers]).to eq({type: "array", items: {type: "number"}})
       expect(properties[:integers]).to eq({type: "array", items: {type: "integer"}})
@@ -106,7 +106,7 @@ RSpec.describe RubyLLM::Schema do
 
     it "supports arrays with constraints" do
       schema_class.array :strings, of: :string, min_items: 1, max_items: 10, description: "String array"
-      
+
       properties = schema_class.properties
       expect(properties[:strings]).to eq({type: "array", items: {type: "string"}, minItems: 1, maxItems: 10, description: "String array"})
     end
@@ -136,7 +136,7 @@ RSpec.describe RubyLLM::Schema do
         string :name
         number :price
       end
-      
+
       schema_class.array :products, of: :product
 
       properties = schema_class.properties
@@ -193,7 +193,7 @@ RSpec.describe RubyLLM::Schema do
 
       instance = schema_class.new
       properties = instance.to_json_schema[:schema][:properties]
-      
+
       level3 = properties[:level1][:properties][:level2][:properties][:level3]
       expect(level3[:properties][:deep_value]).to eq({type: "string"})
     end
@@ -210,7 +210,7 @@ RSpec.describe RubyLLM::Schema do
 
       properties = schema_class.properties
       any_of_schemas = properties[:flexible_field][:anyOf]
-      
+
       expect(any_of_schemas).to include(
         {type: "string", enum: %w[option1 option2]},
         {type: "integer"},
@@ -269,7 +269,7 @@ RSpec.describe RubyLLM::Schema do
 
     it "handles naming correctly" do
       # Named class
-      TestSchemaClass = Class.new(described_class)
+      stub_const("TestSchemaClass", Class.new(described_class))
       named_instance = TestSchemaClass.new
       expect(named_instance.to_json_schema[:name]).to eq("TestSchemaClass")
 
@@ -288,7 +288,7 @@ RSpec.describe RubyLLM::Schema do
 
     it "supports method delegation for schema methods" do
       instance = schema_class.new
-      
+
       expect(instance).to respond_to(:string, :number, :integer, :boolean, :array, :object, :any_of, :null)
       expect(instance).not_to respond_to(:unknown_method)
     end
@@ -296,7 +296,7 @@ RSpec.describe RubyLLM::Schema do
     it "produces correctly structured JSON schema and JSON output" do
       schema_class.string :name
       schema_class.integer :age, required: false
-      
+
       instance = schema_class.new("TestSchema")
       json_output = instance.to_json_schema
 
@@ -349,7 +349,7 @@ RSpec.describe RubyLLM::Schema do
       expect {
         schema_class.array :items, of: :undefined_reference
       }.not_to raise_error
-      
+
       properties = schema_class.properties
       expect(properties[:items][:items]).to eq({"$ref" => "#/$defs/undefined_reference"})
     end
@@ -372,7 +372,7 @@ RSpec.describe RubyLLM::Schema do
 
         expect(schema_class.valid?).to be false
         expect { schema_class.validate! }.to raise_error(
-          RubyLLM::Schema::ValidationError, 
+          RubyLLM::Schema::ValidationError,
           /Circular reference detected involving 'user'/
         )
       end
@@ -423,7 +423,7 @@ RSpec.describe RubyLLM::Schema do
       empty_schema = Class.new(described_class)
       empty_instance = empty_schema.new("EmptySchema")
       empty_output = empty_instance.to_json_schema
-      
+
       expect(empty_output[:schema][:properties]).to eq({})
       expect(empty_output[:schema][:required]).to eq([])
 
@@ -435,7 +435,7 @@ RSpec.describe RubyLLM::Schema do
 
       optional_instance = optional_schema.new
       optional_output = optional_instance.to_json_schema
-      
+
       expect(optional_output[:schema][:required]).to eq([])
       expect(optional_output[:schema][:properties].keys).to contain_exactly(:optional1, :optional2)
     end
@@ -443,15 +443,15 @@ RSpec.describe RubyLLM::Schema do
     it "handles complex nested structures with all features" do
       complex_schema = Class.new(described_class) do
         string :id, description: "Unique identifier"
-        
+
         object :metadata do
           string :created_by
           integer :version
           boolean :published, required: false
         end
-        
+
         array :tags, of: :string, description: "Resource tags"
-        
+
         array :items do
           object do
             string :name
@@ -463,17 +463,17 @@ RSpec.describe RubyLLM::Schema do
             end
           end
         end
-        
+
         any_of :status do
           string enum: %w[draft published]
           null
         end
-        
+
         define :author do
           string :name
           string :email
         end
-        
+
         array :authors, of: :author
       end
 
@@ -486,7 +486,7 @@ RSpec.describe RubyLLM::Schema do
       )
       expect(json_output[:schema]["$defs"][:author]).to be_a(Hash)
       expect(json_output[:schema][:required]).to include(:id, :metadata, :tags, :items, :status, :authors)
-      
+
       # Verify descriptions are preserved
       expect(json_output[:schema][:properties][:id][:description]).to eq("Unique identifier")
       expect(json_output[:schema][:properties][:tags][:description]).to eq("Resource tags")

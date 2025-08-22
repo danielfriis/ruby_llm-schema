@@ -6,9 +6,9 @@ RSpec.describe RubyLLM::Schema, "factory method (.create) approach" do
   describe "configuration options" do
     describe "name" do
       it "uses class name when provided (via constant assignment)" do
-        NamedFactorySchema = described_class.create do
+        stub_const("NamedFactorySchema", described_class.create do
           string :title
-        end
+        end)
 
         instance = NamedFactorySchema.new
         expect(instance.to_json_schema[:name]).to eq("NamedFactorySchema")
@@ -96,13 +96,13 @@ RSpec.describe RubyLLM::Schema, "factory method (.create) approach" do
         string :name, description: "Name field"
         integer :count
         boolean :active, required: false
-        
+
         object :config do
           string :setting
         end
-        
+
         array :tags, of: :string
-        
+
         any_of :status do
           string
           null
@@ -138,7 +138,7 @@ RSpec.describe RubyLLM::Schema, "factory method (.create) approach" do
         description: "Factory test description",
         schema: hash_including(
           type: "object",
-          properties: { title: { type: "string" } },
+          properties: {title: {type: "string"}},
           required: [:title],
           additionalProperties: false,
           strict: true
@@ -158,8 +158,8 @@ RSpec.describe RubyLLM::Schema, "factory method (.create) approach" do
 
       expect(json_output).to include(
         name: "FactoryConfiguredSchema",
-        description: "Instance description",
+        description: "Instance description"
       )
     end
   end
-end 
+end
