@@ -226,7 +226,7 @@ RSpec.describe RubyLLM::Schema do
         string :street
         string :city
       end
-      
+
       schema_class.object :user do
         string :name
         object :address do
@@ -253,7 +253,7 @@ RSpec.describe RubyLLM::Schema do
         string :street
         string :city
       end
-      
+
       schema_class.object :user do
         string :name
         object :address, reference: :address

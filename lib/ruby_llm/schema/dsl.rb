@@ -127,10 +127,10 @@ module RubyLLM
           return reference(options[:reference]) if options[:reference]
 
           sub_schema = Class.new(Schema)
-          
+
           # Evaluate the block and capture the result
           result = sub_schema.class_eval(&)
-          
+
           # If the block returned a reference and no properties were added, use the reference
           if result.is_a?(Hash) && result["$ref"] && sub_schema.properties.empty?
             result.merge(options[:description] ? {description: options[:description]} : {})
