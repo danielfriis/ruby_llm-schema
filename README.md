@@ -262,7 +262,7 @@ end
 
 ### Schema Definitions and References
 
-You can define sub-schemas and reference them in other schemas.
+You can define sub-schemas and reference them in other schemas, or reference the root schema to generate recursive schemas.
 
 ```ruby
 class MySchema < RubyLLM::Schema
@@ -280,6 +280,13 @@ class MySchema < RubyLLM::Schema
   # Using a reference in an object via block
   object :user do
     reference :location
+  end
+
+  # Using a reference to the root schema
+  object :ui_schema do
+    string :element, enum: ["input", "button"]
+    string :label
+    object :sub_schema, reference: :root
   end
 end
 ```

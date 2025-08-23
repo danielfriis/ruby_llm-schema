@@ -87,7 +87,11 @@ module RubyLLM
       end
 
       def reference(schema_name)
-        {"$ref" => "#/$defs/#{schema_name}"}
+        if schema_name == :root
+          {"$ref" => "#"}
+        else
+          {"$ref" => "#/$defs/#{schema_name}"}
+        end
       end
 
       # Schema building methods

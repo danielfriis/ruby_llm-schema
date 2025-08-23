@@ -274,6 +274,19 @@ RSpec.describe RubyLLM::Schema do
         additionalProperties: false
       })
     end
+
+    it "supports reference to the root schema" do
+      schema_class.define :ui_element do
+        string :element_type, enum: ["input", "button"]
+        string :label
+        object :sub_schema, reference: :root
+      end
+
+      instance = schema_class.new
+      json_output = instance.to_json_schema
+
+      expect(json_output[:schema][:properties][:ui_schema][:properties][:sub_schema]).to eq({"$ref" => "#"})
+    end
   end
 
   # ===========================================
