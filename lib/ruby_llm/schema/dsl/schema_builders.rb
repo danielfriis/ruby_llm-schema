@@ -4,7 +4,7 @@ module RubyLLM
   class Schema
     module DSL
       module SchemaBuilders
-        def string_schema(enum: nil, description: nil, min_length: nil, max_length: nil, pattern: nil, format: nil)
+        def string_schema(description: nil, enum: nil, min_length: nil, max_length: nil, pattern: nil, format: nil)
           {
             type: "string",
             enum: enum,
@@ -44,7 +44,7 @@ module RubyLLM
           {type: "null", description: description}.compact
         end
 
-        def object_schema(reference: nil, description: nil, &block)
+        def object_schema(description: nil, reference: nil, &block)
           if reference
             reference(reference)
           else
@@ -66,7 +66,7 @@ module RubyLLM
           end
         end
 
-        def array_schema(of: nil, description: nil, min_items: nil, max_items: nil, &block)
+        def array_schema(description: nil, of: nil, min_items: nil, max_items: nil, &block)
           items = determine_array_items(of, &block)
 
           {

@@ -45,11 +45,11 @@ module RubyLLM
           schema_builder = self
 
           context = Object.new
-          
+
           # Dynamically create methods for all schema builders
           schema_builder.methods.grep(/_schema$/).each do |schema_method|
-            type_name = schema_method.to_s.sub(/_schema$/, '')
-            
+            type_name = schema_method.to_s.sub(/_schema$/, "")
+
             context.define_singleton_method(type_name) do |name = nil, **options, &blk|
               schemas << schema_builder.send(schema_method, **options, &blk)
             end
