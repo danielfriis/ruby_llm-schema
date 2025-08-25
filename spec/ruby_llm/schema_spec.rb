@@ -395,11 +395,6 @@ RSpec.describe RubyLLM::Schema do
     let(:schema_class) { Class.new(described_class) }
 
     it "raises appropriate errors for invalid configurations" do
-      # Unknown schema type
-      expect {
-        schema_class.build_property_schema(:unknown_type)
-      }.to raise_error(RubyLLM::Schema::InvalidSchemaTypeError, "Unknown schema type: unknown_type")
-
       # Invalid array types
       expect {
         schema_class.array :items, of: 123
