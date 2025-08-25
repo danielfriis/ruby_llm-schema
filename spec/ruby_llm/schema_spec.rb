@@ -409,11 +409,11 @@ RSpec.describe RubyLLM::Schema do
       # Invalid object types
       expect {
         schema_class.object :item, of: 123
-      }.to raise_error(RubyLLM::Schema::InvalidObjectTypeError, /Invalid object type: 123.*Must be a symbol reference or a Schema class/)
+      }.to raise_error(RubyLLM::Schema::InvalidObjectTypeError, /Invalid object type: 123.*Must be a symbol reference, a Schema class, or a Schema instance/)
 
       expect {
         schema_class.object :item, of: "invalid"
-      }.to raise_error(RubyLLM::Schema::InvalidObjectTypeError, /Invalid object type: "invalid".*Must be a symbol reference or a Schema class/)
+      }.to raise_error(RubyLLM::Schema::InvalidObjectTypeError, /Invalid object type: "invalid".*Must be a symbol reference, a Schema class, or a Schema instance/)
 
       # Non-Schema class
       expect {

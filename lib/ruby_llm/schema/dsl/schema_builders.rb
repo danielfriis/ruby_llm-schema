@@ -54,7 +54,7 @@ module RubyLLM
             # If the block returned a reference and no properties were added, use the reference
             if result.is_a?(Hash) && result["$ref"] && sub_schema.properties.empty?
               result.merge(description ? {description: description} : {})
-            # If the block returned a Schema class instance, convert it to reference
+            # If the block returned a Schema class or instance, convert it to inline schema
             elsif schema_class?(result) && sub_schema.properties.empty?
               schema_class_to_inline_schema(result).merge(description ? {description: description} : {})
             else

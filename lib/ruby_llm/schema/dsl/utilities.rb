@@ -38,7 +38,7 @@ module RubyLLM
           return reference(of) if of.is_a?(Symbol)
           return schema_class_to_inline_schema(of) if schema_class?(of)
 
-          raise InvalidArrayTypeError, "Invalid array type: #{of.inspect}. Must be a primitive type (:string, :number, etc.), a symbol reference, or a Schema class."
+          raise InvalidArrayTypeError, "Invalid array type: #{of.inspect}. Must be a primitive type (:string, :number, etc.), a symbol reference, a Schema class, or a Schema instance."
         end
 
         def determine_object_reference(of, description = nil)
@@ -52,7 +52,11 @@ module RubyLLM
               raise InvalidObjectTypeError, "Invalid object type: #{of.inspect}. Class must inherit from RubyLLM::Schema."
             end
           else
-            raise InvalidObjectTypeError, "Invalid object type: #{of.inspect}. Must be a symbol reference or a Schema class."
+            if schema_class?(of)
+              schema_class_to_inline_schema(of)
+            else
+              raise InvalidObjectTypeError, "Invalid object type: #{of.inspect}. Must be a symbol reference, a Schema class, or a Schema instance."
+            end
           end
 
           description ? result.merge(description: description) : result
@@ -87,10 +91,17 @@ module RubyLLM
         end
 
         def schema_class?(type)
-          type.is_a?(Class) && type < Schema
+          (type.is_a?(Class) && type < Schema) || type.is_a?(Schema)
         end
 
-        def schema_class_to_inline_schema(schema_class)
+        def schema_class_to_inline_schema(schema_class_or_instance)
+          # Handle both Schema classes and Schema instances
+          schema_class = if schema_class_or_instance.is_a?(Class)
+            schema_class_or_instance
+          else
+            schema_class_or_instance.class
+          end
+
           # Directly convert schema class to inline object schema
           {
             type: "object",
@@ -98,7 +109,13 @@ module RubyLLM
             required: schema_class.required_properties,
             additionalProperties: schema_class.additional_properties
           }.tap do |schema|
-            schema[:description] = schema_class.description if schema_class.description
+            # For instances, prefer instance description over class description
+            description = if schema_class_or_instance.is_a?(Class)
+              schema_class.description
+            else
+              schema_class_or_instance.instance_variable_get(:@description) || schema_class.description
+            end
+            schema[:description] = description if description
           end
         end
       end

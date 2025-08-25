@@ -62,21 +62,9 @@ module RubyLLM
       end
     end
 
-    def self.new(*args, **kwargs, &block)
-      # Only return the class itself when called within a schema block context for embedding
-      # This is determined by checking if we're being called with no arguments in a specific context
-      if args.empty? && kwargs.empty? && block.nil? && caller.any? { |line| line.include?("class_eval") }
-        self
-      else
-        instance = allocate
-        instance.send(:initialize, *args, **kwargs)
-        instance
-      end
-    end
-
-    def initialize(name = nil, description: nil, **kwargs)
+    def initialize(name = nil, description: nil)
       @name = name || self.class.name || "Schema"
-      @description = description || kwargs[:description]
+      @description = description
     end
 
     def validate!
