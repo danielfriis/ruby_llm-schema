@@ -44,9 +44,9 @@ module RubyLLM
           {type: "null", description: description}.compact
         end
 
-        def object_schema(description: nil, reference: nil, &block)
-          if reference
-            reference(reference)
+        def object_schema(description: nil, of: nil, &block)
+          if of
+            determine_object_reference(of, description)
           else
             sub_schema = Class.new(Schema)
             result = sub_schema.class_eval(&block)
@@ -54,6 +54,9 @@ module RubyLLM
             # If the block returned a reference and no properties were added, use the reference
             if result.is_a?(Hash) && result["$ref"] && sub_schema.properties.empty?
               result.merge(description ? {description: description} : {})
+            # If the block returned a Schema class instance, convert it to reference
+            elsif schema_class?(result) && sub_schema.properties.empty?
+              schema_class_to_inline_schema(result).merge(description ? {description: description} : {})
             else
               {
                 type: "object",

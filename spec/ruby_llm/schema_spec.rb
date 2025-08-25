@@ -257,7 +257,7 @@ RSpec.describe RubyLLM::Schema do
 
       schema_class.object :user do
         string :name
-        object :address, reference: :address
+        object :address, of: :address
       end
 
       instance = schema_class.new
@@ -317,7 +317,7 @@ RSpec.describe RubyLLM::Schema do
     it "supports reference to the root schema" do
       schema_class.string :element_type, enum: ["input", "button"]
       schema_class.string :label
-      schema_class.object :sub_schema, reference: :root
+      schema_class.object :sub_schema, of: :root
 
       instance = schema_class.new
       json_output = instance.to_json_schema
@@ -398,11 +398,47 @@ RSpec.describe RubyLLM::Schema do
       # Invalid array types
       expect {
         schema_class.array :items, of: 123
-      }.to raise_error(RubyLLM::Schema::InvalidArrayTypeError, "Invalid array type: 123")
+      }.to raise_error(RubyLLM::Schema::InvalidArrayTypeError, /Invalid array type: 123./)
 
       expect {
         schema_class.array :items, of: "invalid"
-      }.to raise_error(RubyLLM::Schema::InvalidArrayTypeError, "Invalid array type: invalid")
+      }.to raise_error(RubyLLM::Schema::InvalidArrayTypeError, /Invalid array type: "invalid"./)
+    end
+
+    it "raises clear errors for invalid object types" do
+      # Invalid object types
+      expect {
+        schema_class.object :item, of: 123
+      }.to raise_error(RubyLLM::Schema::InvalidObjectTypeError, /Invalid object type: 123.*Must be a symbol reference or a Schema class/)
+
+      expect {
+        schema_class.object :item, of: "invalid"
+      }.to raise_error(RubyLLM::Schema::InvalidObjectTypeError, /Invalid object type: "invalid".*Must be a symbol reference or a Schema class/)
+
+      # Non-Schema class
+      expect {
+        schema_class.object :item, of: String
+      }.to raise_error(RubyLLM::Schema::InvalidObjectTypeError, /Invalid object type: String.*Class must inherit from RubyLLM::Schema/)
+    end
+
+    it "accepts anonymous schema classes with inline schemas" do
+      anonymous_schema = Class.new(described_class) do
+        string :test_field
+      end
+
+      expect {
+        schema_class.object :item, of: anonymous_schema
+      }.not_to raise_error
+
+      properties = schema_class.properties
+      expect(properties[:item]).to eq({
+        type: "object",
+        properties: {
+          test_field: {type: "string"}
+        },
+        required: [:test_field],
+        additionalProperties: false
+      })
     end
 
     it "accepts symbols as references (even if undefined)" do
@@ -550,6 +586,289 @@ RSpec.describe RubyLLM::Schema do
       # Verify descriptions are preserved
       expect(json_output[:schema][:properties][:id][:description]).to eq("Unique identifier")
       expect(json_output[:schema][:properties][:tags][:description]).to eq("Resource tags")
+    end
+  end
+
+  # ===========================================
+  # SCHEMA INSERTION TESTS
+  # ===========================================
+  describe "schema insertion functionality" do
+    let(:person_schema) do
+      Class.new(described_class) do
+        string :name, description: "Person's name"
+        integer :age, description: "Person's age"
+      end
+    end
+
+    let(:address_schema) do
+      Class.new(described_class) do
+        string :street, description: "Street address"
+        string :city, description: "City name"
+        string :zipcode, description: "Postal code"
+      end
+    end
+
+    before do
+      # Give schemas constant names for proper reference generation
+      stub_const("PersonSchema", person_schema)
+      stub_const("AddressSchema", address_schema)
+    end
+
+    describe "array with schema class" do
+      it "supports arrays of schema classes" do
+        schema_class = Class.new(described_class)
+        schema_class.array :employees, of: PersonSchema
+
+        properties = schema_class.properties
+        expect(properties[:employees]).to eq({
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              name: {type: "string", description: "Person's name"},
+              age: {type: "integer", description: "Person's age"}
+            },
+            required: [:name, :age],
+            additionalProperties: false
+          }
+        })
+
+        # No definitions should be created with inline schemas
+        definitions = schema_class.definitions
+        expect(definitions).to be_empty
+      end
+
+      it "supports arrays with description" do
+        schema_class = Class.new(described_class)
+        schema_class.array :team_members, of: PersonSchema, description: "List of team members"
+
+        properties = schema_class.properties
+        expect(properties[:team_members]).to eq({
+          type: "array",
+          description: "List of team members",
+          items: {
+            type: "object",
+            properties: {
+              name: {type: "string", description: "Person's name"},
+              age: {type: "integer", description: "Person's age"}
+            },
+            required: [:name, :age],
+            additionalProperties: false
+          }
+        })
+      end
+    end
+
+    describe "object with of parameter" do
+      it "supports object with of parameter" do
+        schema_class = Class.new(described_class)
+        schema_class.object :founder, of: PersonSchema
+
+        properties = schema_class.properties
+        expect(properties[:founder]).to eq({
+          type: "object",
+          properties: {
+            name: {type: "string", description: "Person's name"},
+            age: {type: "integer", description: "Person's age"}
+          },
+          required: [:name, :age],
+          additionalProperties: false
+        })
+
+        # No definitions should be created with inline schemas
+        definitions = schema_class.definitions
+        expect(definitions).to be_empty
+      end
+
+      it "supports object with of parameter and description" do
+        schema_class = Class.new(described_class)
+        schema_class.object :primary_contact, of: PersonSchema, description: "Main contact person"
+
+        properties = schema_class.properties
+        expect(properties[:primary_contact]).to eq({
+          type: "object",
+          properties: {
+            name: {type: "string", description: "Person's name"},
+            age: {type: "integer", description: "Person's age"}
+          },
+          required: [:name, :age],
+          additionalProperties: false,
+          description: "Main contact person"
+        })
+      end
+
+      it "supports object with symbol reference" do
+        schema_class = Class.new(described_class)
+        schema_class.define :address do
+          string :street
+          string :city
+        end
+
+        schema_class.object :headquarters, of: :address
+
+        properties = schema_class.properties
+        expect(properties[:headquarters]).to eq({"$ref" => "#/$defs/address"})
+      end
+    end
+
+    describe "object with Schema.new in block" do
+      it "supports Schema.new inside object block" do
+        schema_class = Class.new(described_class)
+        schema_class.object :founder do
+          PersonSchema.new
+        end
+
+        properties = schema_class.properties
+        expect(properties[:founder]).to eq({
+          type: "object",
+          properties: {
+            name: {type: "string", description: "Person's name"},
+            age: {type: "integer", description: "Person's age"}
+          },
+          required: [:name, :age],
+          additionalProperties: false
+        })
+
+        # No definitions should be created with inline schemas
+        definitions = schema_class.definitions
+        expect(definitions).to be_empty
+      end
+
+      it "supports Schema.new with description" do
+        schema_class = Class.new(described_class)
+        schema_class.object :ceo, description: "Chief Executive Officer" do
+          PersonSchema.new
+        end
+
+        properties = schema_class.properties
+        expect(properties[:ceo]).to eq({
+          type: "object",
+          properties: {
+            name: {type: "string", description: "Person's name"},
+            age: {type: "integer", description: "Person's age"}
+          },
+          required: [:name, :age],
+          additionalProperties: false,
+          description: "Chief Executive Officer"
+        })
+      end
+    end
+
+    describe "complex schema insertion scenarios" do
+      it "handles multiple schema insertions" do
+        company_schema = Class.new(described_class)
+        company_schema.string :name
+        company_schema.array :employees, of: PersonSchema
+        company_schema.object :headquarters, of: AddressSchema
+        company_schema.object :founder do
+          PersonSchema.new
+        end
+
+        properties = company_schema.properties
+        expect(properties[:employees]).to eq({
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              name: {type: "string", description: "Person's name"},
+              age: {type: "integer", description: "Person's age"}
+            },
+            required: [:name, :age],
+            additionalProperties: false
+          }
+        })
+        expect(properties[:headquarters]).to eq({
+          type: "object",
+          properties: {
+            street: {type: "string", description: "Street address"},
+            city: {type: "string", description: "City name"},
+            zipcode: {type: "string", description: "Postal code"}
+          },
+          required: [:street, :city, :zipcode],
+          additionalProperties: false
+        })
+        expect(properties[:founder]).to eq({
+          type: "object",
+          properties: {
+            name: {type: "string", description: "Person's name"},
+            age: {type: "integer", description: "Person's age"}
+          },
+          required: [:name, :age],
+          additionalProperties: false
+        })
+
+        # No definitions should be created with inline schemas
+        definitions = company_schema.definitions
+        expect(definitions).to be_empty
+      end
+
+      it "creates separate inline schemas for each usage" do
+        company_schema = Class.new(described_class)
+        company_schema.array :employees, of: PersonSchema
+        company_schema.object :ceo, of: PersonSchema
+        company_schema.object :founder do
+          PersonSchema.new
+        end
+
+        properties = company_schema.properties
+
+        # Each usage gets its own inline schema copy
+        person_schema = {
+          type: "object",
+          properties: {
+            name: {type: "string", description: "Person's name"},
+            age: {type: "integer", description: "Person's age"}
+          },
+          required: [:name, :age],
+          additionalProperties: false
+        }
+
+        expect(properties[:employees][:items]).to eq(person_schema)
+        expect(properties[:ceo]).to eq(person_schema)
+        expect(properties[:founder]).to eq(person_schema)
+
+        # No shared definitions
+        definitions = company_schema.definitions
+        expect(definitions).to be_empty
+      end
+
+      it "generates proper JSON schema output with inline schemas" do
+        company_schema = Class.new(described_class)
+        company_schema.string :name
+        company_schema.array :employees, of: PersonSchema
+        company_schema.object :founder, of: PersonSchema
+
+        stub_const("CompanySchema", company_schema)
+        instance = company_schema.new("CompanySchema")
+
+        json_output = instance.to_json_schema
+        expect(json_output[:schema][:type]).to eq("object")
+
+        # Check inline schema in array items
+        expect(json_output[:schema][:properties][:employees][:items]).to eq({
+          type: "object",
+          properties: {
+            name: {type: "string", description: "Person's name"},
+            age: {type: "integer", description: "Person's age"}
+          },
+          required: [:name, :age],
+          additionalProperties: false
+        })
+
+        # Check inline schema in object
+        expect(json_output[:schema][:properties][:founder]).to eq({
+          type: "object",
+          properties: {
+            name: {type: "string", description: "Person's name"},
+            age: {type: "integer", description: "Person's age"}
+          },
+          required: [:name, :age],
+          additionalProperties: false
+        })
+
+        # No $defs section should exist
+        expect(json_output[:schema]).not_to have_key("$defs")
+      end
     end
   end
 end
