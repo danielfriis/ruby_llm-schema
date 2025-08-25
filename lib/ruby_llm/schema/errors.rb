@@ -14,8 +14,15 @@ module RubyLLM
 
     # Raised when an invalid array type is specified
     class InvalidArrayTypeError < Error
-      def initialize(type)
-        super("Invalid array type: #{type}")
+      def initialize(message)
+        super
+      end
+    end
+
+    # Raised when an invalid object type is specified
+    class InvalidObjectTypeError < Error
+      def initialize(message)
+        super
       end
     end
 
