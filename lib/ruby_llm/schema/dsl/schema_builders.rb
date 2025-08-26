@@ -44,7 +44,12 @@ module RubyLLM
           {type: "null", description: description}.compact
         end
 
-        def object_schema(description: nil, of: nil, &block)
+        def object_schema(description: nil, of: nil, reference: nil, &block)
+          if reference
+            warn "[DEPRECATION] The `reference` option will be deprecated. Please use `of` instead."
+            of = reference
+          end
+
           if of
             determine_object_reference(of, description)
           else

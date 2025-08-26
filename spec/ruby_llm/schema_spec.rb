@@ -249,7 +249,7 @@ RSpec.describe RubyLLM::Schema do
       })
     end
 
-    it "supports reference to a defined schema by reference option" do
+    it "supports reference to a defined schema by `of` option" do
       schema_class.define :address do
         string :street
         string :city
@@ -273,6 +273,20 @@ RSpec.describe RubyLLM::Schema do
         required: %i[street city],
         additionalProperties: false
       })
+    end
+
+    it "shows deprecation warning if using `reference` instead of `of`" do
+      schema_class.define :address do
+        string :street
+        string :city
+      end
+
+      expect {
+        schema_class.object :user do
+          string :name
+          object :address, reference: :address
+        end
+      }.to output(/DEPRECATION.*reference/).to_stderr
     end
   end
 
