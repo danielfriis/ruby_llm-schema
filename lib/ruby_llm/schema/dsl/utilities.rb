@@ -5,16 +5,18 @@ module RubyLLM
     module DSL
       module Utilities
         # Schema definition and reference methods
-        def define(name, &)
+        def define(name, description: nil, &block)
           sub_schema = Class.new(Schema)
-          sub_schema.class_eval(&)
+          sub_schema.class_eval(&block)
+          sub_schema.description = description if description
 
           definitions[name] = {
             type: "object",
+            description: sub_schema.description,
             properties: sub_schema.properties,
             required: sub_schema.required_properties,
             additionalProperties: sub_schema.additional_properties
-          }
+          }.compact
         end
 
         def reference(schema_name)
