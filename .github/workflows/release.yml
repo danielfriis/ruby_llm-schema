@@ -8,17 +8,15 @@ on:
 jobs:
   release:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
     - uses: actions/checkout@v4
 
     - name: Create Release with Auto-Generated Notes
-      uses: actions/create-release@v1
+      run: |
+        gh release create ${{ github.ref_name }} \
+          --title "Release ${{ github.ref_name }}" \
+          --generate-notes
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        tag_name: ${{ github.ref }}
-        release_name: Release ${{ github.ref }}
-        body: ${{ steps.release_notes.outputs.body }}
-        draft: false
-        prerelease: false
-        generate_release_notes: true
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
