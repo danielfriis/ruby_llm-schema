@@ -291,6 +291,28 @@ class MySchema < RubyLLM::Schema
 end
 ```
 
+### Nested Schemas
+
+You can embed existing schema classes directly within objects or arrays for reusable schema composition.
+
+```ruby
+class PersonSchema < RubyLLM::Schema
+  string :name
+  integer :age
+end
+
+class CompanySchema < RubyLLM::Schema
+  # Using 'of' parameter
+  object :ceo, of: PersonSchema
+  array :employees, of: PersonSchema
+  
+  # Using Schema.new in block
+  object :founder do
+    PersonSchema.new
+  end
+end
+```
+
 ## JSON Output
 
 ```ruby
