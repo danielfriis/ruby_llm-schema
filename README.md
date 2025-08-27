@@ -311,6 +311,77 @@ class CompanySchema < RubyLLM::Schema
     PersonSchema.new
   end
 end
+
+schema = CompanySchema.new
+schema.to_json_schema
+# =>
+# {
+#    "name":"CompanySchema",
+#    "description":"nil",
+#    "schema":{
+#       "type":"object",
+#       "properties":{
+#          "ceo":{
+#             "type":"object",
+#             "properties":{
+#                "name":{
+#                   "type":"string"
+#                },
+#                "age":{
+#                   "type":"integer"
+#                }
+#             },
+#             "required":[
+#                :"name",
+#                :"age"
+#             ],
+#             "additionalProperties":false
+#          },
+#          "employees":{
+#             "type":"array",
+#             "items":{
+#                "type":"object",
+#                "properties":{
+#                   "name":{
+#                      "type":"string"
+#                   },
+#                   "age":{
+#                      "type":"integer"
+#                   }
+#                },
+#                "required":[
+#                   :"name",
+#                   :"age"
+#                ],
+#                "additionalProperties":false
+#             }
+#          },
+#          "founder":{
+#             "type":"object",
+#             "properties":{
+#                "name":{
+#                   "type":"string"
+#                },
+#                "age":{
+#                   "type":"integer"
+#                }
+#             },
+#             "required":[
+#                :"name",
+#                :"age"
+#             ],
+#             "additionalProperties":false
+#          }
+#       },
+#       "required":[
+#          :"ceo",
+#          :"employees",
+#          :"founder"
+#       ],
+#       "additionalProperties":false,
+#       "strict":true
+#    }
+# }
 ```
 
 ## JSON Output
