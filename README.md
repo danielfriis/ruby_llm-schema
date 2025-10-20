@@ -137,6 +137,10 @@ end
 puts person_schema.to_json
 ```
 
+### Use with RubyLLM
+
+See examples of how to use RubyLLM::Schema together with RubyLLM in the [official documentation](https://rubyllm.com/chat/#using-rubyllmschema-recommended).
+
 ## Schema Property Types
 
 A schema is a collection of properties, which can be of different types. Each type has its own set of properties you can set.
