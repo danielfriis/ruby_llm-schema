@@ -7,24 +7,7 @@ on:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        ruby-version: ['3.1', '3.2', '3.3', '3.4']
-
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Set up Ruby ${{ matrix.ruby-version }}
-        uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: ${{ matrix.ruby-version }}
-          bundler-cache: true
-      
-      - name: Run test suite
-        run: ./bin/test
+    uses: ./.github/workflows/ci.yml
 
   release:
     needs: test

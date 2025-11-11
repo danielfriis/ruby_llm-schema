@@ -1,0 +1,14 @@
+# frozen_string_literal: true
+
+require "spec_helper"
+
+RSpec.describe RubyLLM::Schema, "boolean properties" do
+  let(:schema_class) { Class.new(described_class) }
+
+  it "supports boolean type with description" do
+    schema_class.boolean :enabled, description: "Enabled field"
+
+    properties = schema_class.properties
+    expect(properties[:enabled]).to eq({type: "boolean", description: "Enabled field"})
+  end
+end

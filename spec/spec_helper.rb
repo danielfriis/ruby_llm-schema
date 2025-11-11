@@ -3,6 +3,8 @@
 require "bundler/setup"
 require "ruby_llm/schema"
 
+Dir[File.join(__dir__, "support/**/*.rb")].sort.each { |file| require file }
+
 RSpec.configure do |config|
   # Enable flags like --only-failures and --next-failure
   config.example_status_persistence_file_path = ".rspec_status"
