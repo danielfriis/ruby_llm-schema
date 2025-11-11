@@ -84,7 +84,7 @@ module RubyLLM
     end
 
     def respond_to_missing?(method_name, include_private = false)
-      %i[string number integer boolean array object any_of null].include?(method_name) || super
+      %i[string number integer boolean array object any_of one_of null].include?(method_name) || super
     end
   end
 end
