@@ -34,6 +34,13 @@ module RubyLLM
         @definitions ||= {}
       end
 
+      def name(name = nil)
+        @schema_name = name if name
+        return @schema_name if defined?(@schema_name)
+
+        super()
+      end
+
       def description(description = nil)
         @description = description if description
         @description

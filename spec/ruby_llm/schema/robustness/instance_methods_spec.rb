@@ -15,7 +15,16 @@ RSpec.describe RubyLLM::Schema, "instance methods" do
     expect(schema_class.new("CustomName").to_json_schema[:name]).to eq("CustomName")
 
     described_output = schema_class.new("TestName", description: "Custom description").to_json_schema
+    expect(described_output[:name]).to eq("TestName")
     expect(described_output[:description]).to eq("Custom description")
+  end
+
+  it "allows configuring the schema name via the DSL" do
+    configured_schema = build_schema_class do
+      name "ConfiguredDSLName"
+    end
+
+    expect(configured_schema.new.to_json_schema[:name]).to eq("ConfiguredDSLName")
   end
 
   it "supports method delegation for schema methods" do
