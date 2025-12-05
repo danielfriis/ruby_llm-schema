@@ -10,9 +10,12 @@ module RubyLLM
           type: "object",
           properties: self.class.properties,
           required: self.class.required_properties,
-          additionalProperties: self.class.additional_properties,
-          strict: self.class.strict
+          additionalProperties: self.class.additional_properties
         }
+
+        # Only include strict when truthy (for OpenAI compatibility)
+        # Omitting it makes schemas portable to Anthropic which rejects the strict property
+        schema_hash[:strict] = true if self.class.strict
 
         # Only include $defs if there are definitions
         schema_hash["$defs"] = self.class.definitions unless self.class.definitions.empty?
