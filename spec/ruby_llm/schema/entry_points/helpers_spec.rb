@@ -46,8 +46,7 @@ RSpec.describe RubyLLM::Schema, "helpers module approach" do
       end.to_json_schema
 
       expect(configured_output[:schema][:additionalProperties]).to eq(true)
-      # strict key should be omitted when false (for Anthropic compatibility)
-      expect(configured_output[:schema]).not_to have_key(:strict)
+      expect(configured_output[:schema][:strict]).to eq(false)
     end
 
     it "renders structured JSON schema" do

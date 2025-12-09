@@ -58,6 +58,11 @@ module RubyLLM
         @strict = value
       end
 
+      def skip_strict(value = nil)
+        return @skip_strict ||= false if value.nil?
+        @skip_strict = value
+      end
+
       def validate!
         validator = Validator.new(self)
         validator.validate!
