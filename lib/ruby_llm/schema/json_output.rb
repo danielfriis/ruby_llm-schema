@@ -13,8 +13,7 @@ module RubyLLM
           additionalProperties: self.class.additional_properties
         }
 
-        # Include strict unless skip_strict is set
-        schema_hash[:strict] = self.class.strict unless self.class.skip_strict
+        schema_hash[:strict] = self.class.strict unless self.class.strict.nil?
 
         # Only include $defs if there are definitions
         schema_hash["$defs"] = self.class.definitions unless self.class.definitions.empty?
