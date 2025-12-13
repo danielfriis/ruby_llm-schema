@@ -3,23 +3,27 @@
 require "spec_helper"
 
 RSpec.describe RubyLLM::Schema, ".strict" do
-  it "defaults to true when not set" do
+  it "outputs strict: true by default" do
     schema = Class.new(RubyLLM::Schema)
-    expect(schema.strict).to eq(true)
+    output = schema.new.to_json_schema
+    expect(output[:schema][:strict]).to eq(true)
   end
 
-  it "returns nil when set to nil" do
+  it "omits strict from output when set to nil" do
     schema = Class.new(RubyLLM::Schema) { strict nil }
-    expect(schema.strict).to eq(nil)
+    output = schema.new.to_json_schema
+    expect(output[:schema]).not_to have_key(:strict)
   end
 
-  it "returns true when set to true" do
+  it "outputs strict: true when set to true" do
     schema = Class.new(RubyLLM::Schema) { strict true }
-    expect(schema.strict).to eq(true)
+    output = schema.new.to_json_schema
+    expect(output[:schema][:strict]).to eq(true)
   end
 
-  it "returns false when set to false" do
+  it "outputs strict: false when set to false" do
     schema = Class.new(RubyLLM::Schema) { strict false }
-    expect(schema.strict).to eq(false)
+    output = schema.new.to_json_schema
+    expect(output[:schema][:strict]).to eq(false)
   end
 end
