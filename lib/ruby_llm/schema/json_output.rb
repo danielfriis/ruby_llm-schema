@@ -10,9 +10,10 @@ module RubyLLM
           type: "object",
           properties: self.class.properties,
           required: self.class.required_properties,
-          additionalProperties: self.class.additional_properties,
-          strict: self.class.strict
+          additionalProperties: self.class.additional_properties
         }
+
+        schema_hash[:strict] = self.class.strict unless self.class.strict.nil?
 
         # Only include $defs if there are definitions
         schema_hash["$defs"] = self.class.definitions unless self.class.definitions.empty?
