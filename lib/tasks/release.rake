@@ -1,3 +1,23 @@
+# 1. Bump the version
+# Update VERSION in lib/ruby_llm/schema/version.rb
+
+# 2. Update Gemfile.lock
+# bundle install
+
+# 3. Commit everything
+# git add .
+# git commit -m "Bump version to X.Y.Z"
+
+# 4. Push to main
+# git push origin main
+
+# 5. Trigger the release
+# bundle exec rake release:prepare
+
+# 6. Delete the release branch locally and remotely
+# git branch -d release/X.Y.Z
+# git push origin --delete release/X.Y.Z
+
 namespace :release do
   desc "Prepare and push the release branch to trigger the automated pipeline"
   task :prepare do
