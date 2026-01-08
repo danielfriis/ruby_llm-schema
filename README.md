@@ -51,6 +51,25 @@ schema = PersonSchema.new
 puts schema.to_json
 ```
 
+### Most common use case with RubyLLM
+
+```ruby
+class PersonSchema < RubyLLM::Schema
+  string :name, description: "Person's full name"
+  integer :age, description: "Person's age in years"
+  string :city, required: false, description: "City where they live"
+end
+
+# Use it natively with RubyLLM
+chat     = RubyLLM.chat
+response = chat.with_schema(PersonSchema)
+               .ask("Generate a person named Alice who is 30 years old and lives in New York")
+
+# The response is automatically parsed from JSON
+puts response.content # => {"name" => "Alice", "age" => 30}
+puts response.content.class # => Hash
+```
+
 ## Installation
 
 Add this line to your application's Gemfile:
